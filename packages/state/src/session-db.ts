@@ -561,16 +561,20 @@ export class SessionDB {
         ]) {
           try {
             this._conn.exec(`DROP TRIGGER IF EXISTS ${trig}`);
+            /* v8 ignore start */ // IF EXISTS guard means this never throws; defensive parity with upstream's broader `except sqlite3.OperationalError: pass` (hermes_state.py:601-604).
           } catch {
-            /* v8 ignore next */ // IF EXISTS guard means this never throws; defensive parity with upstream's broader `except sqlite3.OperationalError: pass` (hermes_state.py:601-604).
+            // ignore
           }
+          /* v8 ignore stop */
         }
         for (const tbl of ["messages_fts", "messages_fts_trigram"]) {
           try {
             this._conn.exec(`DROP TABLE IF EXISTS ${tbl}`);
+            /* v8 ignore start */ // IF EXISTS guard means this never throws; defensive parity with upstream (hermes_state.py:608-611).
           } catch {
-            /* v8 ignore next */ // IF EXISTS guard means this never throws; defensive parity with upstream (hermes_state.py:608-611).
+            // ignore
           }
+          /* v8 ignore stop */
         }
         this._conn.exec(FTS_SQL);
         this._conn.exec(FTS_TRIGRAM_SQL);
@@ -604,9 +608,11 @@ export class SessionDB {
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_title_unique " +
           "ON sessions(title) WHERE title IS NOT NULL",
       );
+      /* v8 ignore start */ // CREATE INDEX IF NOT EXISTS only fails if pre-existing titles violate uniqueness (legacy data); defensive parity with upstream (hermes_state.py:651-654).
     } catch {
-      /* v8 ignore next */ // CREATE INDEX IF NOT EXISTS only fails if pre-existing titles violate uniqueness (legacy data); defensive parity with upstream (hermes_state.py:651-654).
+      // ignore
     }
+    /* v8 ignore stop */
 
     // FTS5 setup (separate because CREATE VIRTUAL TABLE IF NOT EXISTS is
     // not reliable inside executescript).
