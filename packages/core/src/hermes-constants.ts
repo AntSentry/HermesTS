@@ -489,7 +489,16 @@ export function applyIpv4Preference(force = false): void {
 
     if (hasOptionsObject) {
       const opts = optionsOrFamilyOrCallback as LookupOptions;
-      requestedFamily = opts.family ?? 0;
+      // Node 22 widened LookupOptions.family to number | "IPv4" | "IPv6".
+      // Normalize the string forms to their numeric AF_INET / AF_INET6
+      // equivalents so the family-zero check below works for all callers.
+      const rawFamily = opts.family ?? 0;
+      requestedFamily =
+        typeof rawFamily === "string"
+          ? rawFamily === "IPv6"
+            ? 6
+            : 4
+          : rawFamily;
       optionsForCall = opts;
     } else if (hasFamilyNumber) {
       requestedFamily = optionsOrFamilyOrCallback as number;

@@ -308,7 +308,7 @@ export class RotatingFileHandler extends Handler {
     options: {
       maxBytes: number;
       backupCount: number;
-      isManaged?: () => boolean;
+      isManaged?: (() => boolean) | undefined;
     },
   ) {
     super();
