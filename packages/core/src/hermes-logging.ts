@@ -413,7 +413,7 @@ export class Logger {
   constructor(public readonly name: string) {}
 
   setLevel(level: LogLevelValue | string): void {
-    this.level = typeof level === "string" ? _resolveLevel(level) : level;
+    this.level = _resolveLevel(level);
   }
   addHandler(h: Handler): void {
     this.handlers.push(h);

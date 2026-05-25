@@ -18,8 +18,14 @@
  */
 
 import { AsyncLocalStorage } from "node:async_hooks";
-import { existsSync, readFileSync, chmodSync } from "node:fs";
-import { homedir } from "node:os";
+import {
+  chmodSync as fsChmod,
+  existsSync as fsExists,
+  readFileSync as fsRead,
+  realpathSync as fsRealpath,
+  statSync as fsStat,
+} from "node:fs";
+import { homedir as osHomedir } from "node:os";
 import {
   resolve as pathResolve,
   parse as pathParse,
@@ -29,8 +35,40 @@ import {
   sep,
   isAbsolute,
 } from "node:path";
-import { realpathSync } from "node:fs";
 import dns, { type LookupAddress, type LookupAllOptions, type LookupOneOptions, type LookupOptions } from "node:dns";
+
+// ─── Mockable IO hooks ──────────────────────────────────────────────────────
+//
+// These wrappers exist so tests can substitute filesystem and homedir
+// behavior without monkey-patching node:fs (Bun exposes it as
+// non-configurable getters). Source code uses these wrappers exclusively.
+// Tests reassign them via `_io.fn = ...` and restore the originals in
+// afterEach via `_resetIo()`.
+
+const _defaultIo = {
+  existsSync: fsExists,
+  readFileSync: fsRead,
+  realpathSync: fsRealpath,
+  chmodSync: fsChmod,
+  statSync: fsStat,
+  homedir: osHomedir,
+  // Hook for packaged-data dir lookup. Default returns null (no Python
+  // wheel concept in Node). Tests override to exercise the upstream
+  // resolution chain in getOptionalSkillsDir/getBundledSkillsDir.
+  getPackagedDataDir: (_name: string): string | null => null,
+};
+
+export const _io: typeof _defaultIo = { ..._defaultIo };
+
+export function _resetIo(): void {
+  _io.existsSync = _defaultIo.existsSync;
+  _io.readFileSync = _defaultIo.readFileSync;
+  _io.realpathSync = _defaultIo.realpathSync;
+  _io.chmodSync = _defaultIo.chmodSync;
+  _io.statSync = _defaultIo.statSync;
+  _io.homedir = _defaultIo.homedir;
+  _io.getPackagedDataDir = _defaultIo.getPackagedDataDir;
+}
 
 // ─── ContextVar equivalent ──────────────────────────────────────────────────
 
@@ -114,9 +152,9 @@ export function getHermesHome(): string {
   if (!_internals.profileFallbackWarned) {
     let active = "";
     try {
-      const activePath = join(homedir(), ".hermes", "active_profile");
-      if (existsSync(activePath)) {
-        active = readFileSync(activePath, "utf-8").trim();
+      const activePath = join(_io.homedir(), ".hermes", "active_profile");
+      if (_io.existsSync(activePath)) {
+        active = _io.readFileSync(activePath, "utf-8").trim();
       }
     } catch {
       active = "";
@@ -138,7 +176,7 @@ export function getHermesHome(): string {
     }
   }
 
-  return join(homedir(), ".hermes");
+  return join(_io.homedir(), ".hermes");
 }
 
 /**
@@ -149,7 +187,7 @@ export function getHermesHome(): string {
  * (~/.hermes/profiles/<name>) → ~/.hermes. Docker profile mode → docker root.
  */
 export function getDefaultHermesRoot(): string {
-  const nativeHome = join(homedir(), ".hermes");
+  const nativeHome = join(_io.homedir(), ".hermes");
   const envHome = process.env.HERMES_HOME ?? "";
   if (!envHome) return nativeHome;
   const envPath = envHome;
@@ -158,7 +196,7 @@ export function getDefaultHermesRoot(): string {
   // Python's Path.resolve().relative_to() semantics.
   const resolveSafe = (p: string): string => {
     try {
-      return realpathSync(p);
+      return _io.realpathSync(p);
     } catch {
       return pathResolve(p);
     }
@@ -192,11 +230,11 @@ export function getDefaultHermesRoot(): string {
  * "platlib") because there's no wheel/setup.py data_files concept. Bundled
  * skills in HermesTS will live under a known relative path within the
  * package; callers should provide an explicit default. This always returns
- * null in the TS port and is exported only so the resolution chain in
- * getOptionalSkillsDir/getBundledSkillsDir matches upstream order.
+ * null in the TS port. Tests can override via _io.getPackagedDataDir to
+ * exercise the upstream resolution chain.
  */
-export function _getPackagedDataDir(_name: string): string | null {
-  return null;
+export function _getPackagedDataDir(name: string): string | null {
+  return _io.getPackagedDataDir(name);
 }
 
 /**
@@ -235,7 +273,7 @@ export function getBundledSkillsDir(defaultDir: string | null = null): string {
 export function getHermesDir(newSubpath: string, oldName: string): string {
   const home = getHermesHome();
   const oldPath = join(home, oldName);
-  if (existsSync(oldPath)) return oldPath;
+  if (_io.existsSync(oldPath)) return oldPath;
   return join(home, newSubpath);
 }
 
@@ -245,7 +283,7 @@ export function getHermesDir(newSubpath: string, oldName: string): string {
  */
 export function displayHermesHome(): string {
   const home = getHermesHome();
-  const userHome = homedir();
+  const userHome = _io.homedir();
   if (home === userHome) {
     return "~/";
   }
@@ -265,7 +303,7 @@ export function displayHermesHome(): string {
 export function secureParentDir(path: string): void {
   let parent: string;
   try {
-    parent = realpathSync(dirname(path));
+    parent = _io.realpathSync(dirname(path));
   } catch {
     parent = pathResolve(dirname(path));
   }
@@ -284,7 +322,7 @@ export function secureParentDir(path: string): void {
   if (parent === "/" || partsLen < 3) return;
 
   try {
-    chmodSync(parent, 0o700);
+    _io.chmodSync(parent, 0o700);
   } catch {
     // Match upstream: OSError is suppressed.
   }
@@ -298,18 +336,12 @@ export function getSubprocessHome(): string | null {
   const hermesHome = getHermesHomeOverride() ?? process.env.HERMES_HOME ?? "";
   if (!hermesHome) return null;
   const profileHome = join(hermesHome, "home");
-  try {
-    const stat = readDirSafely(profileHome);
-    if (stat) return profileHome;
-  } catch {
-    return null;
-  }
-  return null;
+  return _isDirSafely(profileHome) ? profileHome : null;
 }
 
-function readDirSafely(path: string): boolean {
+function _isDirSafely(path: string): boolean {
   try {
-    return existsSync(path) && require("node:fs").statSync(path).isDirectory();
+    return _io.existsSync(path) && _io.statSync(path).isDirectory();
   } catch {
     return false;
   }
@@ -367,7 +399,7 @@ export function isTermux(): boolean {
 export function isWsl(): boolean {
   if (_internals.wslDetected !== undefined) return _internals.wslDetected;
   try {
-    const content = readFileSync("/proc/version", "utf-8");
+    const content = _io.readFileSync("/proc/version", "utf-8");
     _internals.wslDetected = content.toLowerCase().includes("microsoft");
   } catch {
     _internals.wslDetected = false;
@@ -381,16 +413,16 @@ export function isWsl(): boolean {
  */
 export function isContainer(): boolean {
   if (_internals.containerDetected !== undefined) return _internals.containerDetected;
-  if (existsSync("/.dockerenv")) {
+  if (_io.existsSync("/.dockerenv")) {
     _internals.containerDetected = true;
     return true;
   }
-  if (existsSync("/run/.containerenv")) {
+  if (_io.existsSync("/run/.containerenv")) {
     _internals.containerDetected = true;
     return true;
   }
   try {
-    const cgroup = readFileSync("/proc/1/cgroup", "utf-8");
+    const cgroup = _io.readFileSync("/proc/1/cgroup", "utf-8");
     if (
       cgroup.includes("docker") ||
       cgroup.includes("podman") ||
