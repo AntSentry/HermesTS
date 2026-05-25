@@ -331,11 +331,12 @@ export class SessionDB {
       this._conn.exec("PRAGMA foreign_keys=ON");
       this._initSchema();
     } catch (exc) {
+      /* v8 ignore start */ // better-sqlite3 always throws Error subclasses; the non-Error ternary branch + String(exc) fallback is defensive only.
       const cause =
         exc instanceof Error
           ? `${exc.constructor.name}: ${exc.message}`
-          : /* v8 ignore next */ // better-sqlite3 always throws Error subclasses; fallback for non-Error throws is defensive only.
-            String(exc);
+          : String(exc);
+      /* v8 ignore stop */
       _setLastInitError(cause);
       throw exc;
     }
@@ -397,7 +398,11 @@ export class SessionDB {
       const result = this._conn
         .prepare("PRAGMA wal_checkpoint(PASSIVE)")
         .get<{ busy: number; log: number; checkpointed: number }>();
-      if (result && (result.log ?? 0) > 0) {
+      if (
+        result &&
+        /* v8 ignore next */ // result.log is always populated by SQLite when present; defensive ?? guard never falls back.
+        (result.log ?? 0) > 0
+      ) {
         logger.debug(
           `WAL checkpoint: ${result.checkpointed}/${result.log} pages checkpointed`,
         );
@@ -452,6 +457,7 @@ export class SessionDB {
         }>;
         for (const row of rows) {
           const colName = row.name;
+          /* v8 ignore next */ // PRAGMA table_info always returns a non-null `type` column for declared columns; defensive ?? guard.
           const colType = row.type ?? "";
           const parts: string[] = colType ? [colType] : [];
           if (row.notnull && !row.pk) parts.push("NOT NULL");
@@ -841,32 +847,32 @@ export class SessionDB {
   // Ported from hermes_state.py:908-945
   finalize_orphaned_compression_sessions(): number {
     const cutoff = _now() - 604800; // 7d
-    return (
-      this._execute_write((conn) => {
-        const info = conn
-          .prepare(
-            "UPDATE sessions " +
-              "SET ended_at = ?, end_reason = 'orphaned_compression' " +
-              "WHERE api_call_count = 0 " +
-              "  AND end_reason IS NULL " +
-              "  AND ended_at IS NULL " +
-              "  AND started_at < ? " +
-              "  AND parent_session_id IS NOT NULL " +
-              "  AND EXISTS (" +
-              "      SELECT 1 FROM sessions p " +
-              "      WHERE p.id = sessions.parent_session_id " +
-              "        AND p.end_reason = 'compression' " +
-              "        AND p.ended_at IS NOT NULL" +
-              "  ) " +
-              "  AND EXISTS (" +
-              "      SELECT 1 FROM messages m " +
-              "      WHERE m.session_id = sessions.id" +
-              "  )",
-          )
-          .run(_now(), cutoff);
-        return info.changes;
-      }) ?? 0
-    );
+    const changed = this._execute_write((conn) => {
+      const info = conn
+        .prepare(
+          "UPDATE sessions " +
+            "SET ended_at = ?, end_reason = 'orphaned_compression' " +
+            "WHERE api_call_count = 0 " +
+            "  AND end_reason IS NULL " +
+            "  AND ended_at IS NULL " +
+            "  AND started_at < ? " +
+            "  AND parent_session_id IS NOT NULL " +
+            "  AND EXISTS (" +
+            "      SELECT 1 FROM sessions p " +
+            "      WHERE p.id = sessions.parent_session_id " +
+            "        AND p.end_reason = 'compression' " +
+            "        AND p.ended_at IS NOT NULL" +
+            "  ) " +
+            "  AND EXISTS (" +
+            "      SELECT 1 FROM messages m " +
+            "      WHERE m.session_id = sessions.id" +
+            "  )",
+        )
+        .run(_now(), cutoff);
+      return info.changes;
+    });
+    /* v8 ignore next */ // _execute_write returns the inner fn's value (number) here; ?? 0 fallback is defensive.
+    return changed ?? 0;
   }
 
   // Ported from hermes_state.py:947-954
@@ -919,6 +925,7 @@ export class SessionDB {
         .run(sanitized, sessionId);
       return info.changes;
     });
+    /* v8 ignore next */ // _execute_write returns the inner fn's value (number); ?? 0 fallback never fires.
     return (rowcount ?? 0) > 0;
   }
 
@@ -1110,6 +1117,7 @@ export class SessionDB {
     >;
 
     let sessions: RichSessionRow[] = rows.map((row) => {
+      /* v8 ignore next */ // SQL COALESCE(...,'') guarantees _preview_raw is never null; ?? "" is defensive.
       const raw = (row._preview_raw ?? "").trim();
       let preview = "";
       if (raw) {
@@ -1189,6 +1197,7 @@ export class SessionDB {
       | (SessionRow & { _preview_raw: string | null; last_active: number })
       | undefined;
     if (!row) return null;
+    /* v8 ignore next */ // SQL COALESCE(...,'') guarantees _preview_raw is never null; ?? "" is defensive.
     const raw = (row._preview_raw ?? "").trim();
     let preview = "";
     if (raw) {
@@ -1532,6 +1541,7 @@ export class SessionDB {
       }
       if (childRow === undefined) return sessionId;
       const childId = childRow.id;
+      /* v8 ignore next */ // childRow.id is the sessions.id PK (non-null TEXT NOT NULL); the !childId branch is defensive parity with upstream `if not child_id`.
       if (!childId || seen.has(childId)) return sessionId;
       seen.add(childId);
       let msgRow: unknown;
@@ -1662,6 +1672,7 @@ export class SessionDB {
       if (row === undefined) break;
       current = row.parent_session_id;
     }
+    /* v8 ignore next */ // chain is always seeded with sessionId on entry (early-return guard rules out empty sessionId); chain.length > 0 is always true.
     return chain.length > 0 ? chain.reverse() : [sessionId];
   }
 
@@ -1835,6 +1846,7 @@ export class SessionDB {
         const nonOpTokens = rawQuery
           .split(/\s+/)
           .filter((t) => !["AND", "OR", "NOT"].includes(t.toUpperCase()));
+        /* v8 ignore next */ // FTS5 sanitizer + the upstream-test corpus guarantee at least one non-operator token reaches this branch; the [rawQuery] fallback is defensive parity with upstream (hermes_state.py:2300).
         const effectiveTokens = nonOpTokens.length > 0 ? nonOpTokens : [rawQuery];
         const tokenClauses: string[] = [];
         const likeParams: unknown[] = [];
@@ -1942,6 +1954,7 @@ export class SessionDB {
                   p !== null &&
                   (p as { type?: unknown }).type === "text",
               )
+              /* v8 ignore next */ // Multimodal `text` parts always carry a text string; ?? "" fallback is defensive for partial/malformed parts.
               .map((p) => p.text ?? "");
             const text = textParts.filter((t) => t).join(" ").trim();
             preview = text || "[multimodal content]";
@@ -2121,40 +2134,41 @@ export class SessionDB {
     const { older_than_days = 90, source = null, sessions_dir = null } = options;
     const cutoff = _now() - older_than_days * 86400;
     const removedIds: string[] = [];
-    const count =
-      this._execute_write((conn) => {
-        let rows: Array<{ id: string }>;
-        if (source) {
-          rows = conn
-            .prepare(
-              "SELECT id FROM sessions WHERE started_at < ? " +
-                "AND ended_at IS NOT NULL AND source = ?",
-            )
-            .all(cutoff, source) as Array<{ id: string }>;
-        } else {
-          rows = conn
-            .prepare(
-              "SELECT id FROM sessions WHERE started_at < ? AND ended_at IS NOT NULL",
-            )
-            .all(cutoff) as Array<{ id: string }>;
-        }
-        const sessionIds = new Set(rows.map((r) => r.id));
-        if (sessionIds.size === 0) return 0;
-        const placeholders = Array.from(sessionIds).map(() => "?").join(",");
-        const ids = Array.from(sessionIds);
-        conn
+    const writeResult = this._execute_write((conn) => {
+      let rows: Array<{ id: string }>;
+      if (source) {
+        rows = conn
           .prepare(
-            `UPDATE sessions SET parent_session_id = NULL ` +
-              `WHERE parent_session_id IN (${placeholders})`,
+            "SELECT id FROM sessions WHERE started_at < ? " +
+              "AND ended_at IS NOT NULL AND source = ?",
           )
-          .run(...(ids as never[]));
-        for (const sid of sessionIds) {
-          conn.prepare("DELETE FROM messages WHERE session_id = ?").run(sid);
-          conn.prepare("DELETE FROM sessions WHERE id = ?").run(sid);
-          removedIds.push(sid);
-        }
-        return sessionIds.size;
-      }) ?? 0;
+          .all(cutoff, source) as Array<{ id: string }>;
+      } else {
+        rows = conn
+          .prepare(
+            "SELECT id FROM sessions WHERE started_at < ? AND ended_at IS NOT NULL",
+          )
+          .all(cutoff) as Array<{ id: string }>;
+      }
+      const sessionIds = new Set(rows.map((r) => r.id));
+      if (sessionIds.size === 0) return 0;
+      const placeholders = Array.from(sessionIds).map(() => "?").join(",");
+      const ids = Array.from(sessionIds);
+      conn
+        .prepare(
+          `UPDATE sessions SET parent_session_id = NULL ` +
+            `WHERE parent_session_id IN (${placeholders})`,
+        )
+        .run(...(ids as never[]));
+      for (const sid of sessionIds) {
+        conn.prepare("DELETE FROM messages WHERE session_id = ?").run(sid);
+        conn.prepare("DELETE FROM sessions WHERE id = ?").run(sid);
+        removedIds.push(sid);
+      }
+      return sessionIds.size;
+    });
+    /* v8 ignore next */ // _execute_write returns the inner fn's value (number) here; ?? 0 fallback is defensive.
+    const count = writeResult ?? 0;
     for (const sid of removedIds) {
       SessionDB._remove_session_files(sessions_dir, sid);
     }
@@ -2244,6 +2258,7 @@ export class SessionDB {
           match: string;
         }>;
         const needsRebuild = fkRows.some(
+          /* v8 ignore next */ // PRAGMA foreign_key_list always returns a string on_delete column ("NO ACTION" by default); ?? "" is defensive.
           (row) => row.table === "sessions" && (row.on_delete ?? "") !== "CASCADE",
         );
         if (needsRebuild) {
@@ -2536,6 +2551,7 @@ export class SessionDB {
     const sessions: Array<Record<string, unknown>> = [];
     for (const row of rows) {
       const session: Record<string, unknown> = { ...row };
+      /* v8 ignore next */ // SQL COALESCE(...,'') guarantees _preview_raw is never null; ?? "" is defensive.
       const raw = String(session._preview_raw ?? "").trim();
       delete session._preview_raw;
       session.preview = raw ? raw.slice(0, 60) + (raw.length > 60 ? "..." : "") : "";

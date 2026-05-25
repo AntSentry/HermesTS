@@ -193,13 +193,13 @@ describe("preview rendering edge cases", () => {
     // The projected row's `id` field becomes the tip's id; the parent's
     // original id moves to `_lineage_root_id`.
     const p1Proj = rows.find(
-      (r) => (r as Record<string, unknown>)._lineage_root_id === "p1",
+      (r) => (r as unknown as Record<string, unknown>)._lineage_root_id === "p1",
     );
     const p2Proj = rows.find(
-      (r) => (r as Record<string, unknown>)._lineage_root_id === "p2",
+      (r) => (r as unknown as Record<string, unknown>)._lineage_root_id === "p2",
     );
     const p3Proj = rows.find(
-      (r) => (r as Record<string, unknown>)._lineage_root_id === "p3",
+      (r) => (r as unknown as Record<string, unknown>)._lineage_root_id === "p3",
     );
     expect(p1Proj?.preview).toBe("tip short");
     expect(p2Proj?.preview.length).toBe(63);
@@ -324,7 +324,8 @@ describe("get_messages_as_conversation: optional tool fields", () => {
 });
 
 // =========================================================================
-// _sessionLineageRootToTip: empty chain fallback (L1665)
+// _sessionLineageRootToTip: empty chain fallback (L1665) and dangling
+// parent_session_id (L1673)
 // =========================================================================
 
 describe("_sessionLineageRootToTip: empty sessionId", () => {
@@ -333,6 +334,25 @@ describe("_sessionLineageRootToTip: empty sessionId", () => {
     db.append_message("s", "user", { content: "x" });
     // include_ancestors with empty id exercises the !sessionId guard.
     expect(db.get_messages_as_conversation("", { include_ancestors: true })).toEqual([]);
+  });
+
+  it("walk breaks when a parent_session_id points to a deleted ancestor", () => {
+    // Build child with parent that does not exist (FK off temporarily).
+    db._conn.exec("PRAGMA foreign_keys = OFF");
+    try {
+      db.create_session("orphan", "cli", { parent_session_id: "ghost-parent" });
+      db.append_message("orphan", "user", { content: "msg" });
+      // include_ancestors triggers _sessionLineageRootToTip("orphan") which
+      // first walks ROOT->TIP: the SELECT parent_session_id query returns
+      // {parent_session_id: "ghost-parent"}, current = "ghost-parent"; next
+      // iteration the SELECT returns undefined → break (L1673).
+      const msgs = db.get_messages_as_conversation("orphan", {
+        include_ancestors: true,
+      });
+      expect(msgs.length).toBeGreaterThan(0);
+    } finally {
+      db._conn.exec("PRAGMA foreign_keys = ON");
+    }
   });
 });
 
@@ -393,7 +413,10 @@ describe("list_unlinked_telegram_sessions_for_user preview branches", () => {
     db.create_session("u-long", "telegram", { user_id: "u1" });
     db.append_message("u-long", "user", { content: "D".repeat(100) });
 
-    const rows = db.list_unlinked_telegram_sessions_for_user({ user_id: "u1" });
+    const rows = db.list_unlinked_telegram_sessions_for_user({
+      chat_id: "208214988",
+      user_id: "u1",
+    });
     const empty = rows.find((r) => r.id === "u-empty");
     const short = rows.find((r) => r.id === "u-short");
     const long = rows.find((r) => r.id === "u-long");
