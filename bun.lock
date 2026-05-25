@@ -37,6 +37,18 @@
         "@types/better-sqlite3": "^7.6.13",
       },
     },
+    "packages/test-helpers": {
+      "name": "@hermests/test-helpers",
+      "version": "0.0.1",
+      "peerDependencies": {
+        "@hermests/core": "workspace:*",
+        "@hermests/providers": "workspace:*",
+      },
+      "optionalPeers": [
+        "@hermests/core",
+        "@hermests/providers",
+      ],
+    },
     "packages/trajectory": {
       "name": "@hermests/trajectory",
       "version": "0.0.1",
@@ -128,6 +140,8 @@
     "@hermests/providers": ["@hermests/providers@workspace:packages/providers"],
 
     "@hermests/state": ["@hermests/state@workspace:packages/state"],
+
+    "@hermests/test-helpers": ["@hermests/test-helpers@workspace:packages/test-helpers"],
 
     "@hermests/trajectory": ["@hermests/trajectory@workspace:packages/trajectory"],
 
