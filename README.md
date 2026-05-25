@@ -14,7 +14,7 @@ The port preserves the original module boundaries as a Bun/Node workspace monore
 
 | Package | Source module | Status |
 |---|---|---|
-| `@hermests/core` | top-level `*.py` (constants, logging, state, time, utils, bootstrap) | pending |
+| `@hermests/core` | top-level `*.py` (constants, logging, time, utils, bootstrap) | in-review ([#17](https://github.com/AntSentry/HermesTS/pull/17)) |
 | `@hermests/agent` | `agent/` (102 files, 63k LOC) | pending |
 | `@hermests/cli` | `cli.py` + `hermes_cli/` (97 files, 100k LOC) | pending |
 | `@hermests/gateway` | `gateway/` (61 files, 79k LOC) | pending |

@@ -17,23 +17,73 @@
  */
 
 import {
-  closeSync,
-  chmodSync,
-  existsSync,
-  fsyncSync,
-  lstatSync,
-  mkdirSync,
-  openSync,
-  realpathSync,
-  renameSync,
-  statSync,
-  unlinkSync,
+  closeSync as fsClose,
+  chmodSync as fsChmod,
+  existsSync as fsExists,
+  fsyncSync as fsFsync,
+  lstatSync as fsLstat,
+  mkdirSync as fsMkdir,
+  openSync as fsOpen,
+  realpathSync as fsRealpath,
+  renameSync as fsRename,
+  statSync as fsStat,
+  unlinkSync as fsUnlink,
   writeFileSync,
-  writeSync,
+  writeSync as fsWrite,
 } from "node:fs";
 import { dirname, parse as pathParse, join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+
+// ─── Mockable IO hooks ──────────────────────────────────────────────────────
+//
+// Same pattern as hermes-constants._io: test-only indirection so coverage
+// can exercise defensive catch blocks without monkey-patching node:fs
+// (Bun exposes those as non-configurable getters).
+
+const _defaultIo = {
+  closeSync: fsClose,
+  chmodSync: fsChmod,
+  existsSync: fsExists,
+  fsyncSync: fsFsync,
+  lstatSync: fsLstat,
+  mkdirSync: fsMkdir,
+  openSync: fsOpen,
+  realpathSync: fsRealpath,
+  renameSync: fsRename,
+  statSync: fsStat,
+  unlinkSync: fsUnlink,
+  writeSync: fsWrite,
+};
+
+export const _utilsIo: typeof _defaultIo = { ..._defaultIo };
+// Alias kept short for use inside this module.
+const _io = _utilsIo;
+
+export function _resetUtilsIo(): void {
+  for (const k of Object.keys(_defaultIo) as Array<keyof typeof _defaultIo>) {
+    (_io as Record<string, unknown>)[k] = (
+      _defaultIo as Record<string, unknown>
+    )[k];
+  }
+}
+
+// Aliases preserved for source readability — the rest of the file uses the
+// short names below, which always resolve through _io and therefore can
+// be overridden by tests.
+const closeSync = (...args: Parameters<typeof fsClose>) => _io.closeSync(...args);
+const chmodSync = (...args: Parameters<typeof fsChmod>) => _io.chmodSync(...args);
+const existsSync = (...args: Parameters<typeof fsExists>) => _io.existsSync(...args);
+const fsyncSync = (...args: Parameters<typeof fsFsync>) => _io.fsyncSync(...args);
+const lstatSync = (...args: Parameters<typeof fsLstat>) => _io.lstatSync(...args);
+const mkdirSync = (...args: Parameters<typeof fsMkdir>) => _io.mkdirSync(...args);
+const openSync = (...args: Parameters<typeof fsOpen>) => _io.openSync(...args);
+const realpathSync = (...args: Parameters<typeof fsRealpath>) =>
+  _io.realpathSync(...args);
+const renameSync = (...args: Parameters<typeof fsRename>) => _io.renameSync(...args);
+const statSync = (...args: Parameters<typeof fsStat>) => _io.statSync(...args);
+const unlinkSync = (...args: Parameters<typeof fsUnlink>) => _io.unlinkSync(...args);
+const writeSync = (...args: Parameters<typeof fsWrite>) => _io.writeSync(...args);
 
 // ─── Truthy helpers ─────────────────────────────────────────────────────────
 
@@ -65,7 +115,8 @@ export function envVarEnabled(name: string, defaultValue = ""): boolean {
 function _preserveFileMode(path: string): number | null {
   try {
     if (!existsSync(path)) return null;
-    return statSync(path).mode & 0o777;
+    const stat = statSync(path) as import("node:fs").Stats;
+    return stat.mode & 0o777;
   } catch {
     return null;
   }
@@ -92,7 +143,7 @@ function _restoreFileMode(path: string, mode: number | null): void {
 export function atomicReplace(tmpPath: string, target: string): string {
   let realPath = target;
   try {
-    const st = lstatSync(target);
+    const st = lstatSync(target) as import("node:fs").Stats;
     if (st.isSymbolicLink()) {
       // realpathSync will throw if the link is broken. Match upstream
       // behavior (os.path.realpath returns the resolved path even when
