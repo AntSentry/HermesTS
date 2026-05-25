@@ -1,0 +1,41 @@
+{
+  "name": "@hermests/agent",
+  "version": "0.0.1",
+  "description": "Per-turn runtime for HermesTS agents — conversation loop, transports, helpers (in-progress multi-PR port).",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./async-utils": "./src/async-utils.ts",
+    "./retry-utils": "./src/retry-utils.ts",
+    "./iteration-budget": "./src/iteration-budget.ts",
+    "./tool-result-classification": "./src/tool-result-classification.ts",
+    "./trajectory": "./src/trajectory.ts",
+    "./lmstudio-reasoning": "./src/lmstudio-reasoning.ts",
+    "./gemini-schema": "./src/gemini-schema.ts",
+    "./moonshot-schema": "./src/moonshot-schema.ts",
+    "./i18n": "./src/i18n.ts",
+    "./manual-compression-feedback": "./src/manual-compression-feedback.ts",
+    "./portal-tags": "./src/portal-tags.ts",
+    "./prompt-caching": "./src/prompt-caching.ts",
+    "./markdown-tables": "./src/markdown-tables.ts",
+    "./process-bootstrap": "./src/process-bootstrap.ts",
+    "./file-safety": "./src/file-safety.ts",
+    "./system-prompt": "./src/system-prompt.ts",
+    "./subdirectory-hints": "./src/subdirectory-hints.ts",
+    "./secret-sources": "./src/secret-sources/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@hermests/core": "workspace:*",
+    "string-width": "^7.2.0",
+    "yaml": "^2.6.1"
+  },
+  "license": "MIT"
+}
