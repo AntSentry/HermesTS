@@ -35,16 +35,17 @@ let _cacheResolved = false;
 // emitter so callers (and tests) can hook in. The logging module wires its
 // own listener; tests can read `_lastWarning` directly.
 type WarningEmitter = (message: string) => void;
-let _warningEmitter: WarningEmitter = (msg) => {
+// Shared by module initialization and reset so v8 sees the default emitter
+// body as one function, matching hermes_time.py's single logging.warning path.
+function _defaultEmitter(msg: string): void {
   process.stderr.write(`hermes_time: ${msg}\n`);
-};
+}
+let _warningEmitter: WarningEmitter = _defaultEmitter;
 export function setTimezoneWarningEmitter(fn: WarningEmitter): void {
   _warningEmitter = fn;
 }
 export function _resetTimezoneWarningEmitter(): void {
-  _warningEmitter = (msg) => {
-    process.stderr.write(`hermes_time: ${msg}\n`);
-  };
+  _warningEmitter = _defaultEmitter;
 }
 
 /** Read the configured IANA timezone string (or empty). */
@@ -146,7 +147,8 @@ export function getUtcOffsetMinutes(zone: string, at: Date = new Date()): number
     get("minute"),
     get("second"),
   );
-  return Math.round((asUtc - at.getTime()) / 60000);
+  // `|| 0` collapses the JS -0 / +0 quirk so callers don't see negative zero.
+  return Math.round((asUtc - at.getTime()) / 60000) || 0;
 }
 
 /**
