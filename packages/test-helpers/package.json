@@ -1,0 +1,30 @@
+{
+  "name": "@hermests/test-helpers",
+  "version": "0.0.1",
+  "description": "Shared test utilities (mocks and fixtures) for HermesTS packages.",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./logger": "./src/mock-logger.ts",
+    "./clock": "./src/mock-clock.ts",
+    "./fs": "./src/mock-fs.ts",
+    "./provider": "./src/mock-provider.ts",
+    "./subprocess": "./src/mock-subprocess.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@hermests/core": "workspace:*",
+    "@hermests/providers": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@hermests/core": { "optional": true },
+    "@hermests/providers": { "optional": true }
+  },
+  "license": "MIT"
+}
