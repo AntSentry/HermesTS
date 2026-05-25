@@ -6,8 +6,11 @@ coverage
 .env
 .env.local
 .tsbuildinfo
+*.tsbuildinfo
 .vitest-cache
 .idea
-.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 bun.lockb
 tsconfig.tsbuildinfo
