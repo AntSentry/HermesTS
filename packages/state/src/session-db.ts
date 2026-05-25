@@ -384,10 +384,11 @@ export class SessionDB {
         }
         throw exc;
       }
+      /* v8 ignore start */ // Every iteration of the loop either returns or throws; this post-loop fallback is structurally unreachable but kept as a defensive guarantee parallel to upstream.
     }
-    /* v8 ignore next 2 */ // Every iteration of the loop either returns or throws; this post-loop fallback is structurally unreachable but kept as a defensive guarantee parallel to upstream.
     if (lastErr) throw lastErr;
     throw new Error("database is locked after max retries");
+    /* v8 ignore stop */
   }
 
   // Ported from hermes_state.py:429-448
