@@ -361,8 +361,7 @@ describe("flatten_exception_chain", () => {
   test("Error with empty name falls back to constructor.name", () => {
     class WeirdError extends Error {}
     const e = new WeirdError("hi");
-    // @ts-expect-error — deliberately blank `name` to exercise the fallback.
-    e.name = "";
+    Object.defineProperty(e, "name", { value: "" });
     expect(flatten_exception_chain(e)).toBe("WeirdError(hi)");
   });
 
@@ -370,6 +369,24 @@ describe("flatten_exception_chain", () => {
     const noproto = Object.create(null) as Record<string, unknown>;
     noproto.message = "no-proto";
     expect(flatten_exception_chain(noproto)).toBe("object(no-proto)");
+  });
+
+  test("Error with both .name and .constructor.name blank → 'Error' fallback", () => {
+    // Exercises the `|| "Error"` tail of `err.name || err.constructor.name || "Error"`.
+    class StripCtor extends Error {}
+    const e = new StripCtor("body");
+    Object.defineProperty(e, "name", { value: "" });
+    Object.defineProperty(e.constructor, "name", { value: "" });
+    expect(flatten_exception_chain(e)).toBe("Error(body)");
+  });
+
+  test("Error with explicit message=undefined → '?? \"\"' branch yields empty", () => {
+    // Exercises the `err.message ?? ""` branch in `_errorMessage` (an Error
+    // whose `.message` is literally undefined, not the default ""). Combined
+    // with the type name, this collapses to bare `Error` (no parens).
+    const e = new Error("placeholder");
+    Object.defineProperty(e, "message", { value: undefined });
+    expect(flatten_exception_chain(e)).toBe("Error");
   });
 });
 
@@ -933,6 +950,58 @@ describe("emit_stream_drop", () => {
         mid_tool_call: false,
       }),
     ).not.toThrow();
+  });
+
+  test("null agent hits the `agent ?? {}` fallback in emit_stream_drop", () => {
+    // Covers `(agent as ... ?? {})` on the emit_stream_drop side (separate
+    // from the log_stream_retry-side fallback which has its own test).
+    setStreamDiagLogger(recordingLogger().logger);
+    expect(() =>
+      emit_stream_drop(null, {
+        error: new Error("x"),
+        attempt: 1,
+        max_attempts: 1,
+        mid_tool_call: false,
+      }),
+    ).not.toThrow();
+    expect(() =>
+      emit_stream_drop(undefined, {
+        error: new Error("x"),
+        attempt: 1,
+        max_attempts: 1,
+        mid_tool_call: false,
+      }),
+    ).not.toThrow();
+  });
+
+  test("null/undefined error in summary path exercises _errorMessage's null guard", () => {
+    // log_stream_retry calls `_errorMessage(error)` in the catch-fallback
+    // when `_summarize_api_error` isn't on the agent. Passing a null/undef
+    // error there exercises the `if (err === null || err === undefined)`
+    // early-return in `_errorMessage`.
+    const { logger, calls } = recordingLogger();
+    setStreamDiagLogger(logger);
+    log_stream_retry({}, {
+      kind: "drop",
+      error: null,
+      attempt: 1,
+      max_attempts: 1,
+      mid_tool_call: false,
+    });
+    log_stream_retry({}, {
+      kind: "drop",
+      error: undefined,
+      attempt: 1,
+      max_attempts: 1,
+      mid_tool_call: false,
+    });
+    expect(calls).toHaveLength(2);
+    const r0 = _renderPrintf(calls[0]!.fmt, calls[0]!.args);
+    const r1 = _renderPrintf(calls[1]!.fmt, calls[1]!.args);
+    expect(r0).toContain("error_type=NoneType");
+    expect(r0).toContain("error= ");
+    expect(r1).toContain("error_type=undefined");
+    expect(r1).toContain("error= ");
   });
 
   test("_emit_status that throws is swallowed", () => {

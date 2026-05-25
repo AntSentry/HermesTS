@@ -206,7 +206,7 @@ export function stream_diag_capture_response(
           captured[name] = String(val).slice(0, 120);
         }
       } catch {
-        continue;
+        // swallow per-header lookup failures; keep iterating
       }
     }
     diag.headers = captured;
@@ -218,17 +218,18 @@ export function stream_diag_capture_response(
 /**
  * Mimic Python `dict.get(name)` against either a plain object, a `Map`, or any
  * other object that exposes a `.get(name)` method.
+ *
+ * `headers` is always defaulted to `{}` by the sole caller, so the null/
+ * undefined guard upstream Python had via `getattr(..., None) or {}` is
+ * handled at the caller, not here.
  */
-function _headerLookup(headers: unknown, name: string): unknown {
-  if (headers === null || headers === undefined) return undefined;
-  if (typeof headers === "object") {
-    const getter = (headers as { get?: (k: string) => unknown }).get;
-    if (typeof getter === "function") {
-      return getter.call(headers, name);
-    }
-    const record = headers as Record<string, unknown>;
-    if (Object.prototype.hasOwnProperty.call(record, name)) return record[name];
+function _headerLookup(headers: object, name: string): unknown {
+  const getter = (headers as { get?: (k: string) => unknown }).get;
+  if (typeof getter === "function") {
+    return getter.call(headers, name);
   }
+  const record = headers as Record<string, unknown>;
+  if (Object.prototype.hasOwnProperty.call(record, name)) return record[name];
   return undefined;
 }
 
@@ -365,7 +366,7 @@ export function log_stream_retry(agent: unknown, opts: LogStreamRetryOptions): v
     let elapsed = 0.0;
     let ttfb: number | null = null;
     let headersRepr = "-";
-    let httpStatus: string = "-";
+    let httpStatus = "-";
     if (_isDiag(diag)) {
       try {
         bytesCount = Math.trunc(Number(diag.bytes ?? 0) || 0);
@@ -508,7 +509,8 @@ export function emit_stream_drop(agent: unknown, opts: EmitStreamDropOptions): v
 
 // ─── clock indirection (mockable in tests) ─────────────────────────────
 
-let _clock: () => number = () => Date.now() / 1000;
+const _defaultClock = (): number => Date.now() / 1000;
+let _clock: () => number = _defaultClock;
 
 /** Replace the internal clock with a mock. Tests use this for determinism. */
 export function setStreamDiagClock(clock: () => number): void {
@@ -516,7 +518,7 @@ export function setStreamDiagClock(clock: () => number): void {
 }
 
 export function _resetStreamDiagClock(): void {
-  _clock = () => Date.now() / 1000;
+  _clock = _defaultClock;
 }
 
 function _now(): number {
