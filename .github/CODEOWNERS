@@ -1,0 +1,27 @@
+# CODEOWNERS — HermesTS
+#
+# Every PR against `main` requires review from a code owner listed below.
+# Entries cascade top-to-bottom; later patterns override earlier ones.
+#
+# NOTE: `@kody` is a placeholder for Kody, the project lead. The actual GitHub
+# handle is unknown to this PR author — please replace `@kody` with the correct
+# handle (e.g., `@kodysmith` or `@AntSentry/owners`) before enabling required
+# Code Owner reviews in branch protection.
+
+*                       @kody
+
+# Infra / CI ownership
+/.github/               @kody
+/.github/workflows/     @kody
+/.github/dependabot.yml @kody
+/.github/CODEOWNERS     @kody
+
+# Build & repo config
+/package.json           @kody
+/tsconfig.json          @kody
+/vitest.config.ts       @kody
+/biome.json             @kody
+
+# Porting plan governance — changes here change the entire workstream's rules
+/PORTING_PLAN.md        @kody
+/README.md              @kody
