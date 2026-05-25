@@ -1,0 +1,103 @@
+file	internal_agent_imports
+agent/__init__.py	
+agent/account_usage.py	from agent.anthropic_adapter import _is_oauth_token, resolve_anthropic_token
+agent/agent_init.py	from agent.context_compressor import ContextCompressor|from agent.iteration_budget import IterationBudget|from agent.memory_manager import StreamingContextScrubber|from agent.model_metadata import (|from agent.process_bootstrap import _install_safe_stdio|from agent.subdirectory_hints import SubdirectoryHintTracker|from agent.think_scrubber import StreamingThinkScrubber|from agent.tool_guardrails import (
+agent/agent_runtime_helpers.py	from agent.error_classifier import classify_api_error, FailoverReason|from agent.message_sanitization import (|from agent.tool_dispatch_helpers import _trajectory_normalize_msg, make_tool_result_message|from agent.trajectory import convert_scratchpad_to_think
+agent/anthropic_adapter.py	
+agent/async_utils.py	
+agent/auxiliary_client.py	from agent.credential_pool import load_pool|from agent.portal_tags import nous_portal_tags as _nous_portal_tags
+agent/azure_identity_adapter.py	
+agent/background_review.py	
+agent/bedrock_adapter.py	
+agent/browser_provider.py	
+agent/browser_registry.py	from agent.browser_provider import BrowserProvider
+agent/chat_completion_helpers.py	from agent.error_classifier import classify_api_error, FailoverReason|from agent.message_sanitization import (|from agent.model_metadata import is_local_endpoint|from agent.retry_utils import jittered_backoff|from agent.tool_dispatch_helpers import (|from agent.tool_guardrails import (
+agent/codex_responses_adapter.py	from agent.prompt_builder import DEFAULT_AGENT_IDENTITY
+agent/codex_runtime.py	
+agent/context_compressor.py	from agent.auxiliary_client import call_llm, _is_connection_error|from agent.context_engine import ContextEngine|from agent.model_metadata import (|from agent.redact import redact_sensitive_text
+agent/context_engine.py	
+agent/context_references.py	from agent.model_metadata import estimate_tokens_rough
+agent/conversation_compression.py	from agent.model_metadata import estimate_request_tokens_rough
+agent/conversation_loop.py	from agent.anthropic_adapter import _is_oauth_token|from agent.auxiliary_client import set_runtime_main|from agent.codex_responses_adapter import _summarize_user_message_for_log|from agent.display import KawaiiSpinner|from agent.error_classifier import FailoverReason, classify_api_error|from agent.iteration_budget import IterationBudget|from agent.memory_manager import build_memory_context_block|from agent.message_sanitization import (|from agent.model_metadata import (|from agent.nous_rate_guard import (|from agent.process_bootstrap import _install_safe_stdio|from agent.prompt_caching import apply_anthropic_cache_control|from agent.retry_utils import jittered_backoff|from agent.trajectory import has_incomplete_scratchpad|from agent.usage_pricing import estimate_usage_cost, normalize_usage
+agent/copilot_acp_client.py	from agent.file_safety import get_read_block_error, is_write_denied|from agent.redact import redact_sensitive_text
+agent/credential_pool.py	
+agent/credential_sources.py	
+agent/curator_backup.py	from agent.skill_utils import is_excluded_skill_path
+agent/curator.py	
+agent/display.py	from agent.tool_result_classification import file_mutation_result_landed
+agent/error_classifier.py	
+agent/file_safety.py	
+agent/gemini_cloudcode_adapter.py	from agent import google_oauth|from agent.gemini_schema import sanitize_gemini_tool_parameters|from agent.google_code_assist import (
+agent/gemini_native_adapter.py	from agent.gemini_schema import sanitize_gemini_tool_parameters
+agent/gemini_schema.py	
+agent/google_code_assist.py	
+agent/google_oauth.py	
+agent/i18n.py	
+agent/image_gen_provider.py	
+agent/image_gen_registry.py	from agent.image_gen_provider import ImageGenProvider
+agent/image_routing.py	
+agent/insights.py	from agent.usage_pricing import (
+agent/iteration_budget.py	
+agent/lmstudio_reasoning.py	
+agent/lsp/__init__.py	from agent.lsp.manager import LSPService
+agent/lsp/cli.py	
+agent/lsp/client.py	from agent.lsp.protocol import (
+agent/lsp/eventlog.py	
+agent/lsp/install.py	
+agent/lsp/manager.py	from agent.lsp import eventlog|from agent.lsp.client import (|from agent.lsp.servers import (|from agent.lsp.workspace import (
+agent/lsp/protocol.py	
+agent/lsp/range_shift.py	
+agent/lsp/reporter.py	
+agent/lsp/servers.py	from agent.lsp.workspace import nearest_root, normalize_path
+agent/lsp/workspace.py	
+agent/manual_compression_feedback.py	
+agent/markdown_tables.py	
+agent/memory_manager.py	from agent.memory_provider import MemoryProvider
+agent/memory_provider.py	
+agent/message_sanitization.py	
+agent/model_metadata.py	
+agent/models_dev.py	
+agent/moonshot_schema.py	
+agent/nous_rate_guard.py	
+agent/onboarding.py	
+agent/plugin_llm.py	
+agent/portal_tags.py	
+agent/process_bootstrap.py	
+agent/prompt_builder.py	from agent.skill_utils import (
+agent/prompt_caching.py	
+agent/rate_limit_tracker.py	
+agent/redact.py	
+agent/retry_utils.py	
+agent/secret_sources/__init__.py	
+agent/secret_sources/bitwarden.py	
+agent/shell_hooks.py	
+agent/skill_bundles.py	
+agent/skill_commands.py	from agent.skill_preprocessing import (
+agent/skill_preprocessing.py	
+agent/skill_utils.py	
+agent/stream_diag.py	
+agent/subdirectory_hints.py	from agent.prompt_builder import _scan_context_content
+agent/system_prompt.py	from agent.prompt_builder import (
+agent/think_scrubber.py	
+agent/title_generator.py	from agent.auxiliary_client import call_llm
+agent/tool_dispatch_helpers.py	from agent.tool_result_classification import (
+agent/tool_executor.py	from agent.display import (|from agent.tool_dispatch_helpers import (|from agent.tool_guardrails import ToolGuardrailDecision
+agent/tool_guardrails.py	from agent.tool_result_classification import file_mutation_result_landed
+agent/tool_result_classification.py	
+agent/trajectory.py	
+agent/transports/__init__.py	from agent.transports.types import (
+agent/transports/anthropic.py	from agent.transports import register_transport  # noqa: E402|from agent.transports.base import ProviderTransport|from agent.transports.types import NormalizedResponse
+agent/transports/base.py	from agent.transports.types import NormalizedResponse
+agent/transports/bedrock.py	from agent.transports import register_transport  # noqa: E402|from agent.transports.base import ProviderTransport|from agent.transports.types import NormalizedResponse, ToolCall, Usage
+agent/transports/chat_completions.py	from agent.lmstudio_reasoning import resolve_lmstudio_effort|from agent.moonshot_schema import is_moonshot_model, sanitize_moonshot_tools|from agent.prompt_builder import DEVELOPER_ROLE_MODELS|from agent.transports import register_transport  # noqa: E402|from agent.transports.base import ProviderTransport|from agent.transports.types import NormalizedResponse, ToolCall, Usage
+agent/transports/codex_app_server_session.py	from agent.redact import redact_sensitive_text|from agent.transports.codex_app_server import (|from agent.transports.codex_event_projector import CodexEventProjector
+agent/transports/codex_app_server.py	
+agent/transports/codex_event_projector.py	
+agent/transports/codex.py	from agent.transports import register_transport  # noqa: E402|from agent.transports.base import ProviderTransport|from agent.transports.types import NormalizedResponse, ToolCall
+agent/transports/hermes_tools_mcp_server.py	
+agent/transports/types.py	
+agent/usage_pricing.py	from agent.model_metadata import fetch_endpoint_model_metadata, fetch_model_metadata
+agent/video_gen_provider.py	
+agent/video_gen_registry.py	from agent.video_gen_provider import VideoGenProvider
+agent/web_search_provider.py	
+agent/web_search_registry.py	from agent.web_search_provider import WebSearchProvider
