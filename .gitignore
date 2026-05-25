@@ -8,5 +8,7 @@ coverage
 .tsbuildinfo
 .vitest-cache
 .idea
-.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 bun.lockb
