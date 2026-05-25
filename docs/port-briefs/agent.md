@@ -2,7 +2,7 @@
 
 > Decision-grade brief for the future port of upstream `hermes-agent/agent/` to TypeScript.
 > Source of truth: `/Users/knosis/.opensrc/repos/github.com/nousresearch/hermes-agent/main/agent/` @ main.
-> Scope: 102 Python files, **63,297 LOC**. 108 upstream test files import from this module.
+> Scope: 102 Python files, **63,297 LOC**. 116 upstream test files import from this module.
 > Read this brief in full before claiming any agent sub-task.
 
 ---
@@ -332,7 +332,7 @@ The handful of Python-specific patterns that need a "faithful divergence" call w
 
 ## 6. Upstream test mapping
 
-108 upstream test files import from `agent.*`. Below is the full table with case counts (counted via `^(async )?def test_`). Total case count: **~3,000+ tests** when including the giant fixtures (`test_anthropic_adapter.py` at 152, `test_auxiliary_client.py` at 157, `test_error_classifier.py` at 136, `test_run_agent.py` at 337 — that one cuts across many agent modules and feeds task #14 as much as it does the agent module).
+116 upstream test files import from `agent.*`. Below is the full table with case counts (counted via `^(async )?def test_`). Total case count: **~3,000+ tests** when including the giant fixtures (`test_anthropic_adapter.py` at 152, `test_auxiliary_client.py` at 157, `test_error_classifier.py` at 136, `test_run_agent.py` at 337 — that one cuts across many agent modules and feeds task #14 as much as it does the agent module).
 
 **For sub-task assignment, the rule is:** the porter who owns the agent module under test also owns porting the corresponding upstream test cases.
 
@@ -490,7 +490,7 @@ The strategy: respect the dep graph. Port foundations first, integrators last. T
 | **5j** | **auxiliary client** — `auxiliary_client.py` (the 5,289-LOC monster — its own sub-task). Splitting it further introduces cycles. | ~5,300 | 5g, 5h, 5i (needs all three adapters to route to) | `@hermests/providers` | porter-J-aux |
 | **5k** | **context compression** — `context_compressor.py`, `conversation_compression.py`, `memory_manager.py` (depends on memory_provider in 5d), `account_usage.py`, `insights.py` | ~4,200 | 5c, 5d, 5e, 5j | `@hermests/core` | porter-K-compress |
 | **5l** | **curator + background review + shell hooks + display** — `curator.py`, `curator_backup.py`, `background_review.py`, `shell_hooks.py`, `display.py`, `plugin_llm.py` | ~5,800 | 5e, 5f, 5j | `@hermests/core` | porter-L-curator |
-| **5m** | **LSP subpackage** — all of `agent/lsp/*` (10 files: __init__, cli, client, eventlog, install, manager, protocol, range_shift, reporter, servers, workspace) | ~4,300 | 5a | `@hermests/core` | porter-M-lsp |
+| **5m** | **LSP subpackage** — all of `agent/lsp/*` (11 files: __init__, cli, client, eventlog, install, manager, protocol, range_shift, reporter, servers, workspace) | ~4,300 | 5a | `@hermests/core` | porter-M-lsp |
 | **5n** | **codex app-server transport** — `transports/codex_app_server.py`, `transports/codex_app_server_session.py`, `transports/codex_event_projector.py`, `transports/hermes_tools_mcp_server.py` | ~1,800 | 5b, 5e (uses `redact`) | `@hermests/core`, `@hermests/tools` (for the MCP-server child) | porter-N-codex-appserver |
 | **5o** | **integrators — agent_init + chat_completion_helpers + tool_executor + agent_runtime_helpers + conversation_loop** | ~11,100 | **all prior sub-tasks (5a–5n)** | `@hermests/core`, `@hermests/state`, `@hermests/providers`, `@hermests/trajectory`, `@hermests/tools` (lazy import) | porter-O-integrators |
 
