@@ -1,0 +1,103 @@
+agent_file	cross_module_imports
+agent/__init__.py	
+agent/account_usage.py	from hermes_cli.auth import _read_codex_tokens, resolve_codex_runtime_credentials|from hermes_cli.runtime_provider import resolve_runtime_provider
+agent/agent_init.py	from hermes_cli.config import cfg_get|from hermes_cli.timeouts import get_provider_request_timeout|from hermes_constants import get_hermes_home|from model_tools import check_toolset_requirements, get_tool_definitions|from utils import base_url_host_matches
+agent/agent_runtime_helpers.py	from hermes_cli.timeouts import get_provider_request_timeout|from utils import base_url_host_matches, base_url_hostname, env_var_enabled, atomic_json_write
+agent/anthropic_adapter.py	from hermes_constants import get_hermes_home|from utils import base_url_host_matches, normalize_proxy_env_vars
+agent/async_utils.py	
+agent/auxiliary_client.py	from hermes_cli import __version__ as _HERMES_VERSION|from hermes_cli.config import get_hermes_home|from hermes_constants import OPENROUTER_BASE_URL|from utils import base_url_host_matches, base_url_hostname, normalize_proxy_env_vars
+agent/azure_identity_adapter.py	
+agent/background_review.py	
+agent/bedrock_adapter.py	
+agent/browser_provider.py	
+agent/browser_registry.py	
+agent/chat_completion_helpers.py	from hermes_cli.timeouts import get_provider_request_timeout, get_provider_stale_timeout|from tools.terminal_tool import is_persistent_env|from utils import base_url_host_matches, base_url_hostname
+agent/codex_responses_adapter.py	
+agent/codex_runtime.py	
+agent/context_compressor.py	
+agent/context_engine.py	
+agent/context_references.py	
+agent/conversation_compression.py	
+agent/conversation_loop.py	from hermes_constants import display_hermes_home as _dhh_fn|from hermes_logging import set_session_context|from tools.schema_sanitizer import strip_pattern_and_format|from tools.skill_provenance import set_current_write_origin|from utils import base_url_host_matches, env_var_enabled
+agent/copilot_acp_client.py	
+agent/credential_pool.py	from hermes_cli.auth import (|from hermes_cli.config import get_env_value, load_env|from hermes_constants import OPENROUTER_BASE_URL|import hermes_cli.auth as auth_mod
+agent/credential_sources.py	
+agent/curator_backup.py	from hermes_constants import get_hermes_home
+agent/curator.py	from hermes_constants import get_hermes_home|from tools import skill_usage
+agent/display.py	from utils import safe_json_loads
+agent/error_classifier.py	
+agent/file_safety.py	
+agent/gemini_cloudcode_adapter.py	
+agent/gemini_native_adapter.py	
+agent/gemini_schema.py	
+agent/google_code_assist.py	
+agent/google_oauth.py	from hermes_constants import get_hermes_home, secure_parent_dir|from utils import atomic_replace
+agent/i18n.py	
+agent/image_gen_provider.py	
+agent/image_gen_registry.py	
+agent/image_routing.py	
+agent/insights.py	
+agent/iteration_budget.py	
+agent/lmstudio_reasoning.py	
+agent/lsp/__init__.py	
+agent/lsp/cli.py	
+agent/lsp/client.py	
+agent/lsp/eventlog.py	
+agent/lsp/install.py	
+agent/lsp/manager.py	
+agent/lsp/protocol.py	
+agent/lsp/range_shift.py	
+agent/lsp/reporter.py	
+agent/lsp/servers.py	
+agent/lsp/workspace.py	
+agent/manual_compression_feedback.py	
+agent/markdown_tables.py	
+agent/memory_manager.py	from tools.registry import tool_error
+agent/memory_provider.py	
+agent/message_sanitization.py	
+agent/model_metadata.py	from hermes_constants import OPENROUTER_MODELS_URL|from utils import base_url_host_matches, base_url_hostname
+agent/models_dev.py	from utils import atomic_json_write
+agent/moonshot_schema.py	
+agent/nous_rate_guard.py	from utils import atomic_replace
+agent/onboarding.py	
+agent/plugin_llm.py	
+agent/portal_tags.py	
+agent/process_bootstrap.py	from utils import base_url_hostname, normalize_proxy_url
+agent/prompt_builder.py	from hermes_constants import get_hermes_home, get_skills_dir, is_wsl|from utils import atomic_json_write
+agent/prompt_caching.py	
+agent/rate_limit_tracker.py	
+agent/redact.py	
+agent/retry_utils.py	
+agent/secret_sources/__init__.py	
+agent/secret_sources/bitwarden.py	
+agent/shell_hooks.py	from hermes_constants import get_hermes_home|from utils import atomic_replace
+agent/skill_bundles.py	from hermes_constants import get_hermes_home
+agent/skill_commands.py	from hermes_constants import display_hermes_home
+agent/skill_preprocessing.py	
+agent/skill_utils.py	from hermes_constants import get_config_path, get_skills_dir, is_termux
+agent/stream_diag.py	
+agent/subdirectory_hints.py	
+agent/system_prompt.py	
+agent/think_scrubber.py	
+agent/title_generator.py	
+agent/tool_dispatch_helpers.py	
+agent/tool_executor.py	from tools.terminal_tool import (|from tools.tool_result_storage import (
+agent/tool_guardrails.py	from utils import safe_json_loads
+agent/tool_result_classification.py	
+agent/trajectory.py	
+agent/transports/__init__.py	
+agent/transports/anthropic.py	
+agent/transports/base.py	
+agent/transports/bedrock.py	
+agent/transports/chat_completions.py	
+agent/transports/codex_app_server_session.py	
+agent/transports/codex_app_server.py	
+agent/transports/codex_event_projector.py	
+agent/transports/codex.py	
+agent/transports/hermes_tools_mcp_server.py	
+agent/transports/types.py	
+agent/usage_pricing.py	from utils import base_url_host_matches
+agent/video_gen_provider.py	
+agent/video_gen_registry.py	
+agent/web_search_provider.py	
+agent/web_search_registry.py	
