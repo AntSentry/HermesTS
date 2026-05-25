@@ -38,6 +38,14 @@
         "@hermests/providers",
       ],
     },
+    "packages/trajectory": {
+      "name": "@hermests/trajectory",
+      "version": "0.0.1",
+      "dependencies": {
+        "@hermests/core": "workspace:*",
+        "yaml": "^2.6.1",
+      },
+    },
   },
   "packages": {
     "@ampproject/remapping": ["@ampproject/remapping@2.3.0", "", { "dependencies": { "@jridgewell/gen-mapping": "^0.3.5", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw=="],
@@ -121,6 +129,8 @@
     "@hermests/providers": ["@hermests/providers@workspace:packages/providers"],
 
     "@hermests/test-helpers": ["@hermests/test-helpers@workspace:packages/test-helpers"],
+
+    "@hermests/trajectory": ["@hermests/trajectory@workspace:packages/trajectory"],
 
     "@isaacs/cliui": ["@isaacs/cliui@8.0.2", "", { "dependencies": { "string-width": "^5.1.2", "string-width-cjs": "npm:string-width@^4.2.0", "strip-ansi": "^7.0.1", "strip-ansi-cjs": "npm:strip-ansi@^6.0.1", "wrap-ansi": "^8.1.0", "wrap-ansi-cjs": "npm:wrap-ansi@^7.0.0" } }, "sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA=="],
 
