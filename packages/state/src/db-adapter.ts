@@ -1,23 +1,25 @@
-// Thin compatibility shim over `node-sqlite3-wasm` that exposes a surface
-// close to `better-sqlite3`'s — synchronous, prepare/run/all/get, BEGIN
-// IMMEDIATE for explicit transactions. Keeps session-db.ts readable.
+// Thin compatibility shim over `better-sqlite3` that exposes a stable
+// AdapterDatabase surface — synchronous, prepare/run/all/get, BEGIN
+// IMMEDIATE for explicit transactions. Keeps session-db.ts readable
+// and provides a single seam to swap drivers.
 //
-// Why node-sqlite3-wasm rather than better-sqlite3? Pure WebAssembly means
-// no Xcode CLT / node-gyp build step (`npm/bun install` succeeds with no
-// native toolchain). Works identically under Node ≥20 and Bun. SQLite is
-// compiled in with FTS5 + the trigram tokenizer enabled, matching
-// upstream's hermes_state.py expectations exactly.
-import {
-  Database as WasmDatabase,
-  type Statement as WasmStatement,
-  type BindValues,
-  type JSValue,
-  type SQLiteValue,
-  type QueryResult,
-} from "node-sqlite3-wasm";
+// Why better-sqlite3? It is the canonical Node native SQLite binding,
+// includes FTS5 + the trigram tokenizer, supports WAL mode (load-bearing
+// for hermes_state.py upstream parity), and its synchronous API maps
+// 1:1 onto Python's `sqlite3` stdlib used upstream. Cross-process file
+// locking and SQLITE_BUSY semantics also match.
+import BetterSqlite3 from "better-sqlite3";
+import type { Database, Statement } from "better-sqlite3";
 
-export type BindParam = JSValue | bigint | Uint8Array | null | undefined | boolean;
-export type RowObject = Record<string, SQLiteValue>;
+export type BindParam =
+  | string
+  | number
+  | bigint
+  | Buffer
+  | null
+  | undefined
+  | boolean;
+export type RowObject = Record<string, unknown>;
 
 export interface RunInfo {
   changes: number;
@@ -25,9 +27,11 @@ export interface RunInfo {
 }
 
 // Adapter Statement — accepts spread `(...args)` for caller ergonomics and
-// translates to the wasm driver's single-array `BindValues` shape. Coerces
-// `undefined` → `null` (sqlite3 in Python accepts None for unbound params;
-// the wasm driver rejects undefined outright).
+// translates to better-sqlite3's variadic bind. Coerces `undefined` → `null`
+// (Python sqlite3 accepts None for unbound params; better-sqlite3 rejects
+// undefined outright) and `boolean` → `0|1` (better-sqlite3 rejects booleans;
+// SQLite has no native boolean — Python's `sqlite3` registers boolean as
+// integer adapter by default).
 export interface AdapterStatement {
   run(...params: BindParam[]): RunInfo;
   all<T = RowObject>(...params: BindParam[]): T[];
@@ -35,42 +39,47 @@ export interface AdapterStatement {
 }
 
 export interface AdapterDatabase {
-  /** Mirrors Python sqlite3 `conn.execute(sql, ?)` / better-sqlite3 `db.exec`. */
+  /** Mirrors Python sqlite3 `conn.execute(sql)` / better-sqlite3 `db.exec`. */
   exec(sql: string): void;
   prepare(sql: string): AdapterStatement;
   /** True until close() is called. */
   readonly open: boolean;
   close(): void;
-  /** Underlying wasm DB — escape hatch for FTS5-specific PRAGMAs. */
-  readonly _raw: WasmDatabase;
+  /** Underlying better-sqlite3 DB — escape hatch for PRAGMAs (`pragma()`). */
+  readonly _raw: Database;
 }
 
-function _coerceParams(params: BindParam[]): BindValues {
+// better-sqlite3 accepts: number, bigint, string, Buffer, null. It does NOT
+// accept booleans or undefined. Python sqlite3 silently maps both to safe
+// values, so we replicate that here so calling code matches upstream Python
+// 1:1.
+function _coerceParams(params: BindParam[]): unknown[] {
   if (params.length === 0) return [];
-  const coerced: JSValue[] = params.map((p) => {
+  return params.map((p) => {
     if (p === undefined) return null;
-    if (typeof p === "boolean") return p;
-    // bigint is supported natively by node-sqlite3-wasm; pass through.
-    return p as JSValue;
+    if (typeof p === "boolean") return p ? 1 : 0;
+    return p;
   });
-  return coerced;
 }
 
 class StatementWrapper implements AdapterStatement {
-  constructor(private readonly _stmt: WasmStatement) {}
+  constructor(private readonly _stmt: Statement) {}
 
   run(...params: BindParam[]): RunInfo {
-    const info = this._stmt.run(_coerceParams(params));
+    const coerced = _coerceParams(params);
+    const info = this._stmt.run(...coerced);
     return { changes: info.changes, lastInsertRowid: info.lastInsertRowid };
   }
 
   all<T = RowObject>(...params: BindParam[]): T[] {
-    const rows = this._stmt.all(_coerceParams(params)) as QueryResult[];
+    const coerced = _coerceParams(params);
+    const rows = this._stmt.all(...coerced);
     return rows as unknown as T[];
   }
 
   get<T = RowObject>(...params: BindParam[]): T | undefined {
-    const row = this._stmt.get(_coerceParams(params));
+    const coerced = _coerceParams(params);
+    const row = this._stmt.get(...coerced);
     if (row === null || row === undefined) return undefined;
     return row as unknown as T;
   }
@@ -78,10 +87,10 @@ class StatementWrapper implements AdapterStatement {
 
 class DatabaseWrapper implements AdapterDatabase {
   private _open = true;
-  constructor(public readonly _raw: WasmDatabase) {}
+  constructor(public readonly _raw: Database) {}
 
   get open(): boolean {
-    return this._open && this._raw.isOpen;
+    return this._open && this._raw.open;
   }
 
   exec(sql: string): void {
@@ -93,7 +102,7 @@ class DatabaseWrapper implements AdapterDatabase {
   }
 
   close(): void {
-    if (this._open && this._raw.isOpen) {
+    if (this._open && this._raw.open) {
       this._raw.close();
     }
     this._open = false;
@@ -103,18 +112,25 @@ class DatabaseWrapper implements AdapterDatabase {
 export interface OpenOptions {
   /** SQLite busy-handler timeout in ms (PRAGMA busy_timeout). Default: 1000. */
   busyTimeoutMs?: number;
+  /** Open the database in read-only mode. */
+  readonly?: boolean;
 }
 
 export function openDatabase(
   path: string,
   options: OpenOptions = {},
 ): AdapterDatabase {
-  const raw = new WasmDatabase(path);
+  // better-sqlite3 throws synchronously if the file path is unusable.
+  const raw = new BetterSqlite3(path, {
+    readonly: options.readonly ?? false,
+    fileMustExist: false,
+  });
   // Python's sqlite3 default isolation_level="" auto-starts transactions on
-  // DML. node-sqlite3-wasm matches better-sqlite3's autocommit semantics by
-  // default, so we don't need to touch isolation. PRAGMA busy_timeout
-  // matches Python's `timeout=1.0` kwarg.
+  // DML. better-sqlite3 is in autocommit mode by default; we manage our
+  // own explicit BEGIN IMMEDIATE in SessionDB._execute_write so this
+  // matches semantics. PRAGMA busy_timeout matches Python's `timeout=1.0`
+  // kwarg.
   const busyMs = options.busyTimeoutMs ?? 1000;
-  raw.exec(`PRAGMA busy_timeout = ${busyMs}`);
+  raw.pragma(`busy_timeout = ${busyMs}`);
   return new DatabaseWrapper(raw);
 }

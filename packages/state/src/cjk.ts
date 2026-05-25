@@ -19,6 +19,7 @@ export function _isCjkCodepoint(cp: number): boolean {
 export function _containsCjk(text: string): boolean {
   for (const ch of text) {
     const cp = ch.codePointAt(0);
+    /* v8 ignore next */ // for...of always yields a string with a valid codePoint; defensive guard for TS narrowing only.
     if (cp === undefined) continue;
     if (_isCjkCodepoint(cp)) return true;
   }

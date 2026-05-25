@@ -34,6 +34,7 @@ export function _sanitizeFts5Query(query: string): string {
 
   // Step 6: Restore preserved quoted phrases.
   for (let i = 0; i < quotedParts.length; i++) {
+    /* v8 ignore next */ // i is bounded by quotedParts.length so quotedParts[i] is always defined; ?? "" is defensive for TS noUncheckedIndexedAccess.
     sanitized = sanitized.replace(`\x00Q${i}\x00`, quotedParts[i] ?? "");
   }
 

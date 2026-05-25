@@ -8,7 +8,7 @@ import { beforeEach, afterEach, describe, expect, it } from "vitest";
 import { join } from "node:path";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { Database as WasmDatabase } from "node-sqlite3-wasm";
+import BetterSqlite3 from "better-sqlite3";
 
 import {
   SCHEMA_VERSION,
@@ -1457,7 +1457,7 @@ describe("Schema init", () => {
   it("opening an old DB does not eager-add topic-mode tables", () => {
     db.close();
     const oldDbPath = join(_tmpRoot, "old.db");
-    const raw = new WasmDatabase(oldDbPath);
+    const raw = new BetterSqlite3(oldDbPath);
     raw.exec(`
             CREATE TABLE schema_version (version INTEGER NOT NULL);
             INSERT INTO schema_version VALUES (11);
@@ -1524,7 +1524,7 @@ describe("Schema init", () => {
   it("reconciliation adds missing columns from old DB", () => {
     db.close();
     const oldDbPath = join(_tmpRoot, "gap.db");
-    const raw = new WasmDatabase(oldDbPath);
+    const raw = new BetterSqlite3(oldDbPath);
     raw.exec(`
             CREATE TABLE schema_version (version INTEGER NOT NULL);
             INSERT INTO schema_version (version) VALUES (7);
@@ -1573,16 +1573,14 @@ describe("Schema init", () => {
                 codex_reasoning_items TEXT
             );
         `);
-    raw.prepare("INSERT INTO sessions (id, source, started_at) VALUES (?, ?, ?)").run([
-      "s1",
-      "cli",
-      1000.0,
-    ]);
+    raw
+      .prepare("INSERT INTO sessions (id, source, started_at) VALUES (?, ?, ?)")
+      .run("s1", "cli", 1000.0);
     raw
       .prepare(
         "INSERT INTO messages (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
       )
-      .run(["s1", "assistant", "hello", 1001.0]);
+      .run("s1", "assistant", "hello", 1001.0);
     raw.close();
 
     db = new SessionDB(oldDbPath);
@@ -1645,7 +1643,7 @@ describe("Schema init", () => {
   it("v10 → v11 migration backfills tool fields into FTS", () => {
     db.close();
     const legacyPath = join(_tmpRoot, "legacy.db");
-    const raw = new WasmDatabase(legacyPath);
+    const raw = new BetterSqlite3(legacyPath);
     raw.exec(`
             CREATE TABLE schema_version (version INTEGER NOT NULL);
             INSERT INTO schema_version (version) VALUES (10);
@@ -1690,26 +1688,24 @@ describe("Schema init", () => {
                 INSERT INTO messages_fts_trigram(rowid, content) VALUES (new.id, new.content);
             END;
         `);
-    raw.prepare("INSERT INTO sessions (id, source, started_at) VALUES (?, ?, ?)").run([
-      "s1",
-      "cli",
-      Date.now() / 1000,
-    ]);
+    raw
+      .prepare("INSERT INTO sessions (id, source, started_at) VALUES (?, ?, ?)")
+      .run("s1", "cli", Date.now() / 1000);
     raw
       .prepare(
         "INSERT INTO messages (session_id, timestamp, role, content, tool_name, tool_calls) VALUES (?, ?, ?, ?, ?, ?)",
       )
-      .run([
+      .run(
         "s1",
         Date.now() / 1000,
         "assistant",
         "",
         "LEGACYTOOL",
         '{"function":{"name":"web_search","arguments":"{\\"q\\":\\"LEGACYARG\\"}"}}',
-      ]);
+      );
     const legacyHits = raw
       .prepare("SELECT rowid FROM messages_fts WHERE messages_fts MATCH 'LEGACYTOOL'")
-      .all([]);
+      .all();
     expect(legacyHits).toEqual([]);
     raw.close();
 
@@ -2800,5 +2796,100 @@ describe("Periodic WAL checkpoint", () => {
     }
     // Direct call exercises the catch path too.
     db._tryWalCheckpoint();
+  });
+});
+
+// =========================================================================
+// Telegram topic v1 → v2 migration (FK rebuild path).
+// Ported from tests/gateway/test_telegram_topic_mode.py::
+//   test_apply_telegram_topic_migration_rebuilds_bindings_for_cascade
+// State-only behavior — kept here even though upstream filed the test
+// under gateway/.
+// =========================================================================
+
+describe("apply_telegram_topic_migration: v1 → v2 FK rebuild", () => {
+  it("rebuilds bindings table when FK lacks ON DELETE CASCADE", () => {
+    // First run creates v2 shape.
+    db.apply_telegram_topic_migration();
+
+    // Replace the v2 bindings table with a v1-shaped one (FK without CASCADE)
+    // and rewind the schema-version marker so migration treats it as v1.
+    db._conn.exec("DROP TABLE telegram_dm_topic_bindings");
+    db._conn.exec(`
+      CREATE TABLE telegram_dm_topic_bindings (
+        chat_id TEXT NOT NULL,
+        thread_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        session_key TEXT NOT NULL,
+        session_id TEXT NOT NULL REFERENCES sessions(id),
+        managed_mode TEXT NOT NULL DEFAULT 'auto',
+        linked_at REAL NOT NULL,
+        updated_at REAL NOT NULL,
+        PRIMARY KEY (chat_id, thread_id)
+      )
+    `);
+    db._conn
+      .prepare("UPDATE state_meta SET value = '1' WHERE key = 'telegram_dm_topic_schema_version'")
+      .run();
+
+    // Sanity: FK has no CASCADE action yet.
+    const before = db._conn
+      .prepare("PRAGMA foreign_key_list('telegram_dm_topic_bindings')")
+      .all<{ table: string; on_delete: string | null }>();
+    expect(
+      before.some(
+        (r) => r.table === "sessions" && (r.on_delete ?? "") !== "CASCADE",
+      ),
+    ).toBe(true);
+
+    // Re-run migration — should rebuild bindings with CASCADE FK.
+    db.apply_telegram_topic_migration();
+
+    const after = db._conn
+      .prepare("PRAGMA foreign_key_list('telegram_dm_topic_bindings')")
+      .all<{ table: string; on_delete: string | null }>();
+    expect(
+      after.some((r) => r.table === "sessions" && r.on_delete === "CASCADE"),
+    ).toBe(true);
+    expect(db.get_meta("telegram_dm_topic_schema_version")).toBe("2");
+  });
+
+  it("creates topic tables explicitly when migration is called", () => {
+    db.apply_telegram_topic_migration();
+    const tables = db._conn
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
+      .all<{ name: string }>()
+      .map((r) => r.name);
+    expect(tables).toContain("telegram_dm_topic_mode");
+    expect(tables).toContain("telegram_dm_topic_bindings");
+    expect(db.get_meta("telegram_dm_topic_schema_version")).toBe("2");
+  });
+});
+
+// =========================================================================
+// vacuum() — WAL-checkpoint failure path.
+// The checkpoint(TRUNCATE) call is best-effort; transient failures should
+// not block the subsequent VACUUM. Ported behavior from
+// hermes_state.py:3082-3094.
+// =========================================================================
+
+describe("vacuum: wal_checkpoint(TRUNCATE) failure", () => {
+  it("swallows checkpoint failure and still runs VACUUM", () => {
+    db.create_session("v1", "cli");
+    db.append_message("v1", "user", { content: "x" });
+
+    const origExec = db._conn.exec.bind(db._conn);
+    db._conn.exec = ((sql: string) => {
+      if (sql.includes("wal_checkpoint(TRUNCATE)")) {
+        throw new Error("simulated checkpoint failure");
+      }
+      return origExec(sql);
+    }) as typeof db._conn.exec;
+
+    try {
+      expect(() => db.vacuum()).not.toThrow();
+    } finally {
+      db._conn.exec = origExec;
+    }
   });
 });

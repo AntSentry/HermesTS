@@ -112,4 +112,70 @@ describe("resolve_resume_session_id", () => {
       db._conn.prepare = orig;
     }
   });
+
+  it("swallows DB errors during child-lookup mid-walk", () => {
+    // Build a chain so the function enters the for-loop. Then make the
+    // *child query* (FROM sessions WHERE parent_session_id) throw, while
+    // the initial messages-check succeeds (returning a row would short-
+    // circuit, so the first check must return undefined → no row).
+    makeChain([
+      ["root", null],
+      ["c1", "root"],
+    ]);
+    // root has no messages; c1 has none either. Normal flow returns "root".
+    const orig = db._conn.prepare.bind(db._conn);
+    db._conn.prepare = ((sql: string) => {
+      if (sql.includes("FROM sessions WHERE parent_session_id")) {
+        throw new Error("simulated child-lookup failure");
+      }
+      return orig(sql);
+    }) as typeof db._conn.prepare;
+    try {
+      expect(db.resolve_resume_session_id("root")).toBe("root");
+    } finally {
+      db._conn.prepare = orig;
+    }
+  });
+
+  it("swallows DB errors during descendant message-check mid-walk", () => {
+    // Build chain such that initial messages-check for "root" returns
+    // undefined (no rows), then the child query returns "c1", and then
+    // the messages-check FOR THE CHILD throws.
+    makeChain([
+      ["root", null],
+      ["c1", "root"],
+    ]);
+    const orig = db._conn.prepare.bind(db._conn);
+    let initialCheckPassed = false;
+    db._conn.prepare = ((sql: string) => {
+      if (sql.includes("FROM messages WHERE session_id")) {
+        if (!initialCheckPassed) {
+          initialCheckPassed = true;
+          return orig(sql); // first messages-check for "root" works
+        }
+        // second messages-check (for child "c1") throws
+        throw new Error("simulated descendant message-check failure");
+      }
+      return orig(sql);
+    }) as typeof db._conn.prepare;
+    try {
+      expect(db.resolve_resume_session_id("root")).toBe("root");
+    } finally {
+      db._conn.prepare = orig;
+    }
+  });
+
+  it("returns input when walk exhausts the 32-iteration safety cap", () => {
+    // Build a chain longer than the loop cap. Each session has no messages,
+    // so the walk progresses (childRow returned, no msgRow), and after 32
+    // iterations the loop exits and the function returns the original id.
+    const rows: Array<[string, string | null]> = [["root", null]];
+    for (let i = 0; i < 40; i++) {
+      rows.push([`n${i}`, i === 0 ? "root" : `n${i - 1}`]);
+    }
+    makeChain(rows);
+    // None of the sessions have messages; the function should return the
+    // original id after the cap is reached.
+    expect(db.resolve_resume_session_id("root")).toBe("root");
+  });
 });

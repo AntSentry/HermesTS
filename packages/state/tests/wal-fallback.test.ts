@@ -1,7 +1,7 @@
 // Ported from tests/test_hermes_state_wal_fallback.py.
 //
 // The upstream tests monkey-patched sqlite3.Connection.execute via a
-// factory= subclass to inject "locking protocol" failures. node-sqlite3-wasm
+// factory= subclass to inject "locking protocol" failures. better-sqlite3
 // doesn't expose a factory= constructor, so we use a stub AdapterDatabase
 // in-memory that simulates the same exec-time failure mode — the SUT
 // (applyWalWithFallback) only needs the AdapterDatabase.exec contract.
@@ -9,7 +9,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { join } from "node:path";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { Database as WasmDatabase } from "node-sqlite3-wasm";
+import BetterSqlite3 from "better-sqlite3";
 
 import { getLogger } from "@hermests/core";
 import { openDatabase, type AdapterDatabase } from "../src/db-adapter.js";
@@ -35,17 +35,18 @@ afterEach(() => {
   rmSync(_tmpRoot, { recursive: true, force: true });
 });
 
-// simulates `sqlite3.OperationalError("locking protocol")` raised from the
+// Simulates `sqlite3.OperationalError("locking protocol")` raised from the
 // `PRAGMA journal_mode=WAL` statement only (other statements still pass
-// through to a real in-memory wasm DB so post-fallback writes can succeed).
+// through to a real in-memory better-sqlite3 DB so post-fallback writes
+// can succeed).
 function _makeBlockingAdapter(reason: string): AdapterDatabase & {
   attempts: number;
 } {
-  const real = new WasmDatabase(":memory:");
+  const real = new BetterSqlite3(":memory:");
   let attempts = 0;
   const adapter = {
     get open() {
-      return real.isOpen;
+      return real.open;
     },
     get attempts() {
       return attempts;
@@ -65,14 +66,14 @@ function _makeBlockingAdapter(reason: string): AdapterDatabase & {
       const s = real.prepare(sql);
       return {
         run(...params: unknown[]) {
-          const info = s.run(params as never);
+          const info = s.run(...(params as never[]));
           return { changes: info.changes, lastInsertRowid: info.lastInsertRowid };
         },
         all<T>(...params: unknown[]): T[] {
-          return s.all(params as never) as unknown as T[];
+          return s.all(...(params as never[])) as unknown as T[];
         },
         get<T>(...params: unknown[]): T | undefined {
-          const r = s.get(params as never);
+          const r = s.get(...(params as never[]));
           if (r === null || r === undefined) return undefined;
           return r as unknown as T;
         },
@@ -139,6 +140,46 @@ describe("applyWalWithFallback", () => {
     const conn = _makeBlockingAdapter("no such table: nope");
     expect(() => applyWalWithFallback(conn)).toThrow(/no such table/);
     conn.close();
+  });
+
+  it("re-raises non-Error throwables (strings, plain objects)", () => {
+    // SQLite drivers should always throw Error subclasses, but the WAL
+    // detection helper still defends against non-Error throws by re-raising
+    // (it cannot apply the message-substring fallback heuristic).
+    const real = new BetterSqlite3(":memory:");
+    const adapter: AdapterDatabase = {
+      get open() { return real.open; },
+      _raw: real,
+      exec(sql: string) {
+        if (sql.toLowerCase().includes("journal_mode=wal")) {
+          // eslint-disable-next-line @typescript-eslint/no-throw-literal
+          throw "string-shaped failure";
+        }
+        real.exec(sql);
+      },
+      prepare(sql: string) {
+        const s = real.prepare(sql);
+        return {
+          run(...params: unknown[]) {
+            const info = s.run(...(params as never[]));
+            return { changes: info.changes, lastInsertRowid: info.lastInsertRowid };
+          },
+          all<T>(...params: unknown[]): T[] {
+            return s.all(...(params as never[])) as unknown as T[];
+          },
+          get<T>(...params: unknown[]): T | undefined {
+            const r = s.get(...(params as never[]));
+            return (r === null || r === undefined ? undefined : r) as T | undefined;
+          },
+        };
+      },
+      close() { real.close(); },
+    };
+    try {
+      expect(() => applyWalWithFallback(adapter)).toThrow();
+    } finally {
+      adapter.close();
+    }
   });
 
   it("deduplicates the warning per db_label across many calls", () => {
@@ -220,7 +261,7 @@ describe("getLastInitError + formatSessionDbUnavailable", () => {
     const path = join(_tmpRoot, "broken.db");
     // Use the actual SessionDB but on a read-only target so init fails. The
     // simplest portable failure mode: hand a directory path where a file
-    // is expected. wasm wraps the system error and we capture it.
+    // is expected. better-sqlite3 wraps the system error and we capture it.
     expect(() => new SessionDB(_tmpRoot)).toThrow();
     const cause = getLastInitError();
     expect(cause).toBeTruthy();
@@ -262,7 +303,7 @@ describe("SessionDB end-to-end with WAL fallback engaged", () => {
   it("uses fallback path transparently and remains usable", () => {
     // Direct end-to-end: open a SessionDB normally and verify journal mode
     // is wal (real FS). The blocking-factory monkey-patch the Python test
-    // uses doesn't translate to the wasm driver; the unit test above
+    // uses doesn't translate to a Node sqlite driver; the unit test above
     // covers the fallback path of applyWalWithFallback itself end-to-end.
     const db = new SessionDB(join(_tmpRoot, "real.db"));
     try {

@@ -18,7 +18,10 @@
   },
   "dependencies": {
     "@hermests/core": "workspace:*",
-    "node-sqlite3-wasm": "^0.8.57"
+    "better-sqlite3": "^12.10.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13"
   },
   "license": "MIT"
 }

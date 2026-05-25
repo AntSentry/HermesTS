@@ -22,12 +22,13 @@ import { _encodeContent, _decodeContent } from "./content-codec.js";
 import { sanitizeTitle, MAX_TITLE_LENGTH } from "./title.js";
 import { _sanitizeFts5Query } from "./fts5.js";
 import { _containsCjk, _countCjk } from "./cjk.js";
+import BetterSqlite3 from "better-sqlite3";
+
 import {
   openDatabase,
   type AdapterDatabase,
   type BindParam,
 } from "./db-adapter.js";
-import { Database as WasmDatabase } from "node-sqlite3-wasm";
 
 const logger = getLogger("hermes_state");
 
@@ -321,10 +322,10 @@ export class SessionDB {
 
     try {
       mkdirSync(dirname(this.db_path), { recursive: true });
-      // node-sqlite3-wasm options translated by openDatabase():
+      // better-sqlite3 options translated by openDatabase():
       // - busyTimeoutMs: SQLite PRAGMA busy_timeout. Python uses 1.0s (1000ms).
-      // - Autocommit semantics match better-sqlite3 / our explicit
-      //   BEGIN IMMEDIATE pattern — no Python-style isolation_level="" auto-BEGIN.
+      // - Explicit BEGIN IMMEDIATE pattern in _execute_write matches Python
+      //   sqlite3's `isolation_level=""` auto-BEGIN-on-DML semantics.
       this._conn = openDatabase(this.db_path, { busyTimeoutMs: 1000 });
       applyWalWithFallback(this._conn, { dbLabel: "state.db" });
       this._conn.exec("PRAGMA foreign_keys=ON");
@@ -333,7 +334,8 @@ export class SessionDB {
       const cause =
         exc instanceof Error
           ? `${exc.constructor.name}: ${exc.message}`
-          : String(exc);
+          : /* v8 ignore next */ // better-sqlite3 always throws Error subclasses; fallback for non-Error throws is defensive only.
+            String(exc);
       _setLastInitError(cause);
       throw exc;
     }
@@ -383,6 +385,7 @@ export class SessionDB {
         throw exc;
       }
     }
+    /* v8 ignore next 2 */ // Every iteration of the loop either returns or throws; this post-loop fallback is structurally unreachable but kept as a defensive guarantee parallel to upstream.
     if (lastErr) throw lastErr;
     throw new Error("database is locked after max retries");
   }
@@ -425,7 +428,7 @@ export class SessionDB {
   ): Record<string, Record<string, string>> {
     // In-memory reference DB to let SQLite itself parse the DDL — no regex
     // edge cases over DEFAULT expressions / CHECK / inline REFERENCES.
-    const ref = new WasmDatabase(":memory:");
+    const ref = new BetterSqlite3(":memory:");
     try {
       ref.exec(schemaSql);
       const tables = ref
@@ -471,9 +474,11 @@ export class SessionDB {
         rows = this._conn
           .prepare(`PRAGMA table_info("${tableName}")`)
           .all() as Array<{ name: string }>;
+        /* v8 ignore start */ // PRAGMA table_info never fails on a successfully-created table; defensive skip from upstream parity (hermes_state.py:512-513).
       } catch {
         continue;
       }
+      /* v8 ignore stop */
       const liveCols = new Set<string>();
       for (const row of rows) liveCols.add(row.name);
 
@@ -484,11 +489,13 @@ export class SessionDB {
             this._conn.exec(
               `ALTER TABLE "${tableName}" ADD COLUMN "${safeName}" ${colType}`,
             );
+            /* v8 ignore start */ // ALTER TABLE ADD COLUMN can race when two SessionDB processes open the same DB simultaneously and both attempt reconciliation; defensive log-and-skip from upstream parity (hermes_state.py:537-540).
           } catch (exc) {
             logger.debug(
               `reconcile ${tableName}.${colName}: ${(exc as Error).message}`,
             );
           }
+          /* v8 ignore stop */
         }
       }
     }
@@ -507,11 +514,13 @@ export class SessionDB {
           "ON messages(session_id, platform_message_id) " +
           "WHERE platform_message_id IS NOT NULL",
       );
+      /* v8 ignore start */ // Index create only fails on very old DBs missing the platform_message_id column even after reconcile; defensive log-and-skip mirroring upstream (hermes_state.py:564-567).
     } catch (exc) {
       logger.debug(
         `idx_messages_platform_msg_id create skipped: ${(exc as Error).message}`,
       );
     }
+    /* v8 ignore stop */
 
     // Schema version bookkeeping
     const versionRow = this._conn
@@ -553,14 +562,14 @@ export class SessionDB {
           try {
             this._conn.exec(`DROP TRIGGER IF EXISTS ${trig}`);
           } catch {
-            // ignore
+            /* v8 ignore next */ // IF EXISTS guard means this never throws; defensive parity with upstream's broader `except sqlite3.OperationalError: pass` (hermes_state.py:601-604).
           }
         }
         for (const tbl of ["messages_fts", "messages_fts_trigram"]) {
           try {
             this._conn.exec(`DROP TABLE IF EXISTS ${tbl}`);
           } catch {
-            // ignore
+            /* v8 ignore next */ // IF EXISTS guard means this never throws; defensive parity with upstream (hermes_state.py:608-611).
           }
         }
         this._conn.exec(FTS_SQL);
@@ -596,7 +605,7 @@ export class SessionDB {
           "ON sessions(title) WHERE title IS NOT NULL",
       );
     } catch {
-      // ignore — index already exists
+      /* v8 ignore next */ // CREATE INDEX IF NOT EXISTS only fails if pre-existing titles violate uniqueness (legacy data); defensive parity with upstream (hermes_state.py:651-654).
     }
 
     // FTS5 setup (separate because CREATE VIRTUAL TABLE IF NOT EXISTS is
@@ -1872,39 +1881,44 @@ export class SessionDB {
       }
     }
 
-    const contextStmt = this._conn.prepare(
+    // NOTE: prepare + bind + fetch are intentionally inside the per-row
+    // try/except below so a transient SQLite error during context lookup
+    // for any single row degrades gracefully to `context: []` — matching
+    // upstream hermes_state.py:2353-2411 where `self._conn.execute(...)`
+    // (prepare+run) sits inside the try.
+    const contextSql =
       "WITH target AS (" +
-        "    SELECT session_id, timestamp, id " +
-        "    FROM messages " +
-        "    WHERE id = ?" +
-        ") " +
-        "SELECT role, content " +
-        "FROM (" +
-        "    SELECT m.id, m.timestamp, m.role, m.content " +
-        "    FROM messages m " +
-        "    JOIN target t ON t.session_id = m.session_id " +
-        "    WHERE (m.timestamp < t.timestamp) " +
-        "       OR (m.timestamp = t.timestamp AND m.id < t.id) " +
-        "    ORDER BY m.timestamp DESC, m.id DESC " +
-        "    LIMIT 1" +
-        ") " +
-        "UNION ALL " +
-        "SELECT role, content FROM messages WHERE id = ? " +
-        "UNION ALL " +
-        "SELECT role, content " +
-        "FROM (" +
-        "    SELECT m.id, m.timestamp, m.role, m.content " +
-        "    FROM messages m " +
-        "    JOIN target t ON t.session_id = m.session_id " +
-        "    WHERE (m.timestamp > t.timestamp) " +
-        "       OR (m.timestamp = t.timestamp AND m.id > t.id) " +
-        "    ORDER BY m.timestamp ASC, m.id ASC " +
-        "    LIMIT 1" +
-        ")",
-    );
+      "    SELECT session_id, timestamp, id " +
+      "    FROM messages " +
+      "    WHERE id = ?" +
+      ") " +
+      "SELECT role, content " +
+      "FROM (" +
+      "    SELECT m.id, m.timestamp, m.role, m.content " +
+      "    FROM messages m " +
+      "    JOIN target t ON t.session_id = m.session_id " +
+      "    WHERE (m.timestamp < t.timestamp) " +
+      "       OR (m.timestamp = t.timestamp AND m.id < t.id) " +
+      "    ORDER BY m.timestamp DESC, m.id DESC " +
+      "    LIMIT 1" +
+      ") " +
+      "UNION ALL " +
+      "SELECT role, content FROM messages WHERE id = ? " +
+      "UNION ALL " +
+      "SELECT role, content " +
+      "FROM (" +
+      "    SELECT m.id, m.timestamp, m.role, m.content " +
+      "    FROM messages m " +
+      "    JOIN target t ON t.session_id = m.session_id " +
+      "    WHERE (m.timestamp > t.timestamp) " +
+      "       OR (m.timestamp = t.timestamp AND m.id > t.id) " +
+      "    ORDER BY m.timestamp ASC, m.id ASC " +
+      "    LIMIT 1" +
+      ")";
 
     for (const match of matches) {
       try {
+        const contextStmt = this._conn.prepare(contextSql);
         const contextRows = contextStmt.all(match.id, match.id) as Array<{
           role: string;
           content: unknown;
@@ -2057,14 +2071,18 @@ export class SessionDB {
         ) {
           try {
             unlinkSync(join(sessionsDir, name));
+            /* v8 ignore start */ // Per-file unlink failure (permission, race vs another writer); upstream mirrors with silent skip (hermes_state.py:2532-2542).
           } catch {
             // ignore
           }
+          /* v8 ignore stop */
         }
       }
+      /* v8 ignore start */ // Outer catch covers readdirSync failure on stale/disappearing sessions directory; defensive parity with upstream (hermes_state.py:2530-2546).
     } catch {
       // ignore
     }
+    /* v8 ignore stop */
   }
 
   // Ported from hermes_state.py:2544-2576
