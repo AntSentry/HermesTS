@@ -25,7 +25,7 @@ The port preserves the original module boundaries as a Bun/Node workspace monore
 | `@hermests/acp` | `acp_adapter/` + `acp_registry/` | pending |
 | `@hermests/tui-gateway` | `tui_gateway/` | pending |
 | `@hermests/state` | `hermes_state.py` (140 KB) | pending |
-| `@hermests/trajectory` | `trajectory_compressor.py` | pending |
+| `@hermests/trajectory` | `trajectory_compressor.py` | PR open (port/trajectory) |
 | `@hermests/mcp` | `mcp_serve.py` | pending |
 | `@hermests/batch` | `batch_runner.py` | pending |
 
