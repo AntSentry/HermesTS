@@ -1,0 +1,103 @@
+file	external_imports
+agent/__init__.py	
+agent/account_usage.py	from __future__ import annotations|from dataclasses import dataclass|from datetime import datetime, timezone|from hermes_cli.auth import _read_codex_tokens, resolve_codex_runtime_credentials|from hermes_cli.runtime_provider import resolve_runtime_provider|from typing import Any, Optional|import httpx
+agent/agent_init.py	from __future__ import annotations|from datetime import datetime|from hermes_cli.config import cfg_get|from hermes_cli.timeouts import get_provider_request_timeout|from hermes_constants import get_hermes_home|from model_tools import check_toolset_requirements, get_tool_definitions|from pathlib import Path|from typing import Any, Dict, List, Optional|from urllib.parse import urlparse, parse_qs, urlunparse|from utils import base_url_host_matches|import logging|import os|import re|import sys|import threading|import time|import uuid
+agent/agent_runtime_helpers.py	from __future__ import annotations|from datetime import datetime|from hermes_cli.timeouts import get_provider_request_timeout|from pathlib import Path|from typing import Any, Dict, List, Optional, Tuple|from utils import base_url_host_matches, base_url_hostname, env_var_enabled, atomic_json_write|import copy|import json|import logging|import os|import re|import threading|import time|import uuid
+agent/anthropic_adapter.py	from hermes_constants import get_hermes_home|from pathlib import Path|from typing import Any, Dict, List, Optional, Tuple|from urllib.parse import urlparse|from utils import base_url_host_matches, normalize_proxy_env_vars|import copy|import json|import logging|import os|import platform|import subprocess
+agent/async_utils.py	from __future__ import annotations|from concurrent.futures import Future|from typing import Any, Coroutine, Optional|import asyncio|import logging
+agent/auxiliary_client.py	from hermes_cli import __version__ as _HERMES_VERSION|from hermes_cli.config import get_hermes_home|from hermes_constants import OPENROUTER_BASE_URL|from pathlib import Path  # noqa: F401 — used by test mocks|from types import SimpleNamespace|from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING|from urllib.parse import urlparse, parse_qs, urlunparse|from utils import base_url_host_matches, base_url_hostname, normalize_proxy_env_vars|import json|import logging|import os|import threading|import time
+agent/azure_identity_adapter.py	from __future__ import annotations|from dataclasses import dataclass|from typing import Any, Callable, Dict, Optional|import functools|import logging|import os|import threading
+agent/background_review.py	from __future__ import annotations|from typing import Any, Dict, List, Optional|import contextlib|import json|import logging|import os
+agent/bedrock_adapter.py	from types import SimpleNamespace|from typing import Any, Dict, List, Optional, Tuple|import json|import logging|import os|import re
+agent/browser_provider.py	from __future__ import annotations|from typing import Any, Dict|import abc
+agent/browser_registry.py	from __future__ import annotations|from typing import Dict, List, Optional|import logging|import threading
+agent/chat_completion_helpers.py	from __future__ import annotations|from datetime import datetime|from hermes_cli.timeouts import get_provider_request_timeout, get_provider_stale_timeout|from pathlib import Path|from tools.terminal_tool import is_persistent_env|from types import SimpleNamespace|from typing import Any, Dict, List, Optional, Tuple|from urllib.parse import urlparse, parse_qs, urlunparse|from utils import base_url_host_matches, base_url_hostname|import concurrent.futures|import contextvars|import copy|import json|import logging|import os|import random|import re|import sys|import threading|import time|import uuid
+agent/codex_responses_adapter.py	from __future__ import annotations|from types import SimpleNamespace|from typing import Any, Dict, List, Optional|import hashlib|import json|import logging|import re|import uuid
+agent/codex_runtime.py	from __future__ import annotations|from types import SimpleNamespace|from typing import Any, Dict, List|import json|import logging|import os
+agent/context_compressor.py	from typing import Any, Dict, List, Optional|import hashlib|import json|import logging|import re|import time
+agent/context_engine.py	from abc import ABC, abstractmethod|from typing import Any, Dict, List
+agent/context_references.py	from __future__ import annotations|from dataclasses import dataclass, field|from pathlib import Path|from typing import Awaitable, Callable|import asyncio|import inspect|import json|import mimetypes|import os|import re|import subprocess
+agent/conversation_compression.py	from __future__ import annotations|from datetime import datetime|from pathlib import Path|from typing import Any, List, Optional, Tuple|import logging|import os|import tempfile|import uuid
+agent/conversation_loop.py	from __future__ import annotations|from hermes_constants import display_hermes_home as _dhh_fn|from hermes_logging import set_session_context|from tools.schema_sanitizer import strip_pattern_and_format|from tools.skill_provenance import set_current_write_origin|from typing import Any, Dict, List, Optional|from utils import base_url_host_matches, env_var_enabled|import json|import logging|import os|import random|import re|import ssl|import threading|import time|import uuid
+agent/copilot_acp_client.py	from __future__ import annotations|from collections import deque|from pathlib import Path|from types import SimpleNamespace|from typing import Any|import json|import os|import queue|import re|import shlex|import subprocess|import threading|import time
+agent/credential_pool.py	from __future__ import annotations|from dataclasses import dataclass, fields, replace|from datetime import datetime, timezone|from hermes_cli.auth import (|from hermes_cli.config import get_env_value, load_env|from hermes_constants import OPENROUTER_BASE_URL|from typing import Any, Dict, List, Optional, Set, Tuple|import hermes_cli.auth as auth_mod|import logging|import os|import random|import re|import threading|import time|import uuid
+agent/credential_sources.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Callable, List, Optional|import os
+agent/curator_backup.py	from __future__ import annotations|from datetime import datetime, timezone|from hermes_constants import get_hermes_home|from pathlib import Path|from typing import Any, Dict, List, Optional, Tuple|import json|import logging|import os|import re|import shutil|import tarfile|import tempfile|import time
+agent/curator.py	from __future__ import annotations|from datetime import datetime, timedelta, timezone|from hermes_constants import get_hermes_home|from pathlib import Path|from tools import skill_usage|from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set|import json|import logging|import os|import re|import tempfile|import threading
+agent/display.py	from dataclasses import dataclass, field|from difflib import unified_diff|from pathlib import Path|from utils import safe_json_loads|import logging|import os|import sys|import threading|import time
+agent/error_classifier.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any, Dict, Optional|import enum|import logging
+agent/file_safety.py	from __future__ import annotations|from pathlib import Path|from typing import Optional|import os
+agent/gemini_cloudcode_adapter.py	from __future__ import annotations|from types import SimpleNamespace|from typing import Any, Dict, Iterator, List, Optional|import httpx|import json|import logging|import time|import uuid
+agent/gemini_native_adapter.py	from __future__ import annotations|from types import SimpleNamespace|from typing import Any, Dict, Iterator, List, Optional|import asyncio|import base64|import httpx|import json|import logging|import time|import uuid
+agent/gemini_schema.py	from __future__ import annotations|from typing import Any, Dict
+agent/google_code_assist.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any, Dict, List, Optional|import json|import logging|import time|import urllib.error|import urllib.parse|import urllib.request|import uuid
+agent/google_oauth.py	from __future__ import annotations|from dataclasses import dataclass|from hermes_constants import get_hermes_home, secure_parent_dir|from pathlib import Path|from typing import Any, Dict, Optional, Tuple|from utils import atomic_replace|import base64|import contextlib|import hashlib|import http.server|import json|import logging|import os|import re as _re|import secrets|import stat|import threading|import time|import urllib.error|import urllib.parse|import urllib.request
+agent/i18n.py	from __future__ import annotations|from functools import lru_cache|from pathlib import Path|from typing import Any|import logging|import os|import threading
+agent/image_gen_provider.py	from __future__ import annotations|from pathlib import Path|from typing import Any, Dict, List, Optional, Tuple|import abc|import base64|import datetime|import logging|import uuid
+agent/image_gen_registry.py	from __future__ import annotations|from typing import Dict, List, Optional|import logging|import threading
+agent/image_routing.py	from __future__ import annotations|from pathlib import Path|from typing import Any, Dict, List, Optional, Tuple|import base64|import logging|import mimetypes
+agent/insights.py	from collections import Counter, defaultdict|from datetime import datetime|from typing import Any, Dict, List|import json|import time
+agent/iteration_budget.py	from __future__ import annotations|import threading
+agent/lmstudio_reasoning.py	from __future__ import annotations|from typing import List, Optional
+agent/lsp/__init__.py	from __future__ import annotations|from typing import Optional|import atexit|import logging|import threading
+agent/lsp/cli.py	from __future__ import annotations|from typing import Optional|import argparse|import sys
+agent/lsp/client.py	from __future__ import annotations|from pathlib import Path|from typing import Any, Awaitable, Callable, Dict, List, Optional, Set|from urllib.parse import quote, unquote|import asyncio|import logging|import os
+agent/lsp/eventlog.py	from __future__ import annotations|from typing import Tuple|import logging|import os|import threading
+agent/lsp/install.py	from __future__ import annotations|from pathlib import Path|from typing import Any, Dict, Optional|import logging|import os|import shutil|import subprocess|import sys|import threading
+agent/lsp/manager.py	from __future__ import annotations|from concurrent.futures import Future as ConcurrentFuture|from typing import Any, Callable, Dict, List, Optional, Tuple|import asyncio|import logging|import os|import threading|import time
+agent/lsp/protocol.py	from __future__ import annotations|from typing import Any, Optional, Tuple|import asyncio|import json|import logging
+agent/lsp/range_shift.py	from __future__ import annotations|from typing import Any, Callable, Dict, List, Optional|import difflib
+agent/lsp/reporter.py	from __future__ import annotations|from typing import Any, Dict, List
+agent/lsp/servers.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple|import logging|import os|import shutil
+agent/lsp/workspace.py	from __future__ import annotations|from pathlib import Path|from typing import Iterable, Optional, Tuple|import logging|import os
+agent/manual_compression_feedback.py	from __future__ import annotations|from typing import Any, Sequence
+agent/markdown_tables.py	from __future__ import annotations|from typing import List|from wcwidth import wcswidth|import re
+agent/memory_manager.py	from __future__ import annotations|from tools.registry import tool_error|from typing import Any, Dict, List, Optional|import inspect|import logging|import re
+agent/memory_provider.py	from __future__ import annotations|from abc import ABC, abstractmethod|from typing import Any, Dict, List, Optional|import logging
+agent/message_sanitization.py	from __future__ import annotations|from typing import Any|import json|import logging|import re
+agent/model_metadata.py	from hermes_constants import OPENROUTER_MODELS_URL|from pathlib import Path|from typing import Any, Dict, List, Optional, Tuple|from urllib.parse import urlparse|from utils import base_url_host_matches, base_url_hostname|import ipaddress|import logging|import os|import re|import requests|import time|import yaml
+agent/models_dev.py	from dataclasses import dataclass|from pathlib import Path|from typing import Any, Dict, List, Optional, Tuple|from utils import atomic_json_write|import json|import logging|import re|import requests|import time
+agent/moonshot_schema.py	from __future__ import annotations|from typing import Any, Dict, List|import copy
+agent/nous_rate_guard.py	from __future__ import annotations|from typing import Any, Mapping, Optional|from utils import atomic_replace|import json|import logging|import os|import tempfile|import time
+agent/onboarding.py	from __future__ import annotations|from pathlib import Path|from typing import Any, Mapping, Optional|import logging
+agent/plugin_llm.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Union|import base64|import json|import logging|import re
+agent/portal_tags.py	from __future__ import annotations|from typing import List
+agent/process_bootstrap.py	from __future__ import annotations|from typing import Optional|from utils import base_url_hostname, normalize_proxy_url|import os|import sys|import urllib.request
+agent/prompt_builder.py	from collections import OrderedDict|from hermes_constants import get_hermes_home, get_skills_dir, is_wsl|from pathlib import Path|from typing import Optional|from utils import atomic_json_write|import json|import logging|import os|import re|import threading
+agent/prompt_caching.py	from typing import Any, Dict, List|import copy
+agent/rate_limit_tracker.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any, Mapping, Optional|import time
+agent/redact.py	import logging|import os|import re
+agent/retry_utils.py	import random|import threading|import time
+agent/secret_sources/__init__.py	
+agent/secret_sources/bitwarden.py	from __future__ import annotations|from dataclasses import dataclass, field|from pathlib import Path|from typing import Dict, List, Optional, Tuple|import hashlib|import json|import logging|import os|import platform|import shutil|import stat|import subprocess|import sys|import tempfile|import time|import urllib.error|import urllib.request|import zipfile
+agent/shell_hooks.py	from __future__ import annotations|from contextlib import contextmanager|from dataclasses import dataclass, field|from datetime import datetime, timezone|from hermes_constants import get_hermes_home|from pathlib import Path|from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple|from utils import atomic_replace|import difflib|import json|import logging|import os|import re|import shlex|import subprocess|import sys|import tempfile|import threading|import time
+agent/skill_bundles.py	from __future__ import annotations|from hermes_constants import get_hermes_home|from pathlib import Path|from typing import Any, Dict, List, Optional, Tuple|import logging|import os|import re|import yaml
+agent/skill_commands.py	from hermes_constants import display_hermes_home|from pathlib import Path|from typing import Any, Dict, Optional|import json|import logging|import os|import re
+agent/skill_preprocessing.py	from pathlib import Path|import logging|import re|import subprocess
+agent/skill_utils.py	from hermes_constants import get_config_path, get_skills_dir, is_termux|from pathlib import Path|from typing import Any, Dict, List, Optional, Set, Tuple|import logging|import os|import re|import sys
+agent/stream_diag.py	from __future__ import annotations|from typing import Any, Dict, List, Optional|import logging|import time
+agent/subdirectory_hints.py	from pathlib import Path|from typing import Dict, Any, Optional, Set|import logging|import os|import shlex
+agent/system_prompt.py	from __future__ import annotations|from typing import Any, Dict, List, Optional|import json|import os
+agent/think_scrubber.py	from __future__ import annotations|from typing import Tuple
+agent/title_generator.py	from typing import Callable, Optional|import logging|import threading
+agent/tool_dispatch_helpers.py	from __future__ import annotations|from pathlib import Path|from typing import Any, Dict, List, Optional|import json|import logging|import os|import re
+agent/tool_executor.py	from __future__ import annotations|from tools.terminal_tool import (|from tools.tool_result_storage import (|from typing import Any, Optional|import concurrent.futures|import contextvars|import json|import logging|import os|import random|import threading|import time
+agent/tool_guardrails.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any, Mapping|from utils import safe_json_loads|import hashlib|import json
+agent/tool_result_classification.py	from __future__ import annotations|from typing import Any|import json
+agent/trajectory.py	from datetime import datetime|from typing import Any, Dict, List|import json|import logging
+agent/transports/__init__.py	
+agent/transports/anthropic.py	from typing import Any, Dict, List, Optional
+agent/transports/base.py	from abc import ABC, abstractmethod|from typing import Any, Dict, List, Optional
+agent/transports/bedrock.py	from typing import Any, Dict, List, Optional
+agent/transports/chat_completions.py	from typing import Any, Dict, List, Optional|import copy
+agent/transports/codex_app_server_session.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any, Callable, Optional|import logging|import os|import threading|import time
+agent/transports/codex_app_server.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any, Callable, Optional|import json|import os|import queue|import subprocess|import threading|import time
+agent/transports/codex_event_projector.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any, Optional|import hashlib|import json
+agent/transports/codex.py	from typing import Any, Dict, List, Optional
+agent/transports/hermes_tools_mcp_server.py	from __future__ import annotations|from typing import Any, Optional|import json|import logging|import os|import sys
+agent/transports/types.py	from __future__ import annotations|from dataclasses import dataclass, field|from typing import Any|import json
+agent/usage_pricing.py	from __future__ import annotations|from dataclasses import dataclass|from datetime import datetime, timezone|from decimal import Decimal|from typing import Any, Dict, Literal, Optional|from utils import base_url_host_matches|import re
+agent/video_gen_provider.py	from __future__ import annotations|from pathlib import Path|from typing import Any, Dict, List, Optional, Tuple|import abc|import base64|import datetime|import logging|import uuid
+agent/video_gen_registry.py	from __future__ import annotations|from typing import Dict, List, Optional|import logging|import threading
+agent/web_search_provider.py	from __future__ import annotations|from typing import Any, Dict, List|import abc
+agent/web_search_registry.py	from __future__ import annotations|from typing import Dict, List, Optional|import logging|import threading

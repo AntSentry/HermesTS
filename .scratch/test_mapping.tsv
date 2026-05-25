@@ -1,0 +1,117 @@
+test_path	agent_imports	case_count
+tests/agent/lsp/test_backend_gate.py	from agent.lsp import eventlog	5
+tests/agent/lsp/test_broken_set.py	from agent.lsp.manager import LSPService|from agent.lsp.servers import SERVERS, ServerContext, ServerDef, SpawnSpec|from agent.lsp.workspace import clear_cache	7
+tests/agent/lsp/test_client_e2e.py	from agent.lsp.client import LSPClient	6
+tests/agent/lsp/test_delta_key.py	from agent.lsp.client import _diagnostic_key|from agent.lsp.manager import _diag_key|from agent.lsp.range_shift import (	18
+tests/agent/lsp/test_eventlog.py	from agent.lsp import eventlog	18
+tests/agent/lsp/test_install_and_lint_fixes.py	from agent.lsp.install import INSTALL_RECIPES	12
+tests/agent/lsp/test_lifecycle.py	from agent import lsp as lsp_module	8
+tests/agent/lsp/test_protocol.py	from agent.lsp.protocol import (	18
+tests/agent/lsp/test_reporter.py	from agent.lsp.reporter import (	10
+tests/agent/lsp/test_service.py	from agent.lsp.manager import LSPService|from agent.lsp.servers import (	5
+tests/agent/lsp/test_workspace.py	from agent.lsp.workspace import (	12
+tests/agent/test_anthropic_adapter.py	from agent.anthropic_adapter import (|from agent.prompt_caching import apply_anthropic_cache_control|from agent.transports import get_transport	152
+tests/agent/test_anthropic_keychain.py	from agent.anthropic_adapter import (	12
+tests/agent/test_arcee_trinity_overrides.py	from agent.auxiliary_client import (	6
+tests/agent/test_async_utils.py	from agent.async_utils import safe_schedule_threadsafe	6
+tests/agent/test_auxiliary_client.py	from agent.auxiliary_client import (	157
+tests/agent/test_compress_focus.py	from agent.context_compressor import ContextCompressor	4
+tests/agent/test_compressor_historical_media.py	from agent.context_compressor import (	27
+tests/agent/test_compressor_image_tokens.py	from agent.context_compressor import (	12
+tests/agent/test_context_compressor_summary_continuity.py	from agent.context_compressor import ContextCompressor, SUMMARY_PREFIX	2
+tests/agent/test_context_compressor.py	from agent.context_compressor import ContextCompressor, SUMMARY_PREFIX	83
+tests/agent/test_context_engine.py	from agent.context_compressor import ContextCompressor|from agent.context_engine import ContextEngine	19
+tests/agent/test_copilot_acp_client.py	from agent.copilot_acp_client import CopilotACPClient	7
+tests/agent/test_copilot_acp_deprecation.py	from agent.copilot_acp_client import _is_gh_copilot_deprecation_message	6
+tests/agent/test_custom_provider_extra_body.py	from agent.agent_init import _merge_custom_provider_extra_body	3
+tests/agent/test_display_emoji.py	from agent.display import get_tool_emoji	10
+tests/agent/test_display.py	from agent.display import (	31
+tests/agent/test_error_classifier.py	from agent.error_classifier import (	136
+tests/agent/test_external_skills_dirs_cache.py	from agent import skill_utils|from agent.skill_utils import (	6
+tests/agent/test_gemini_fast_fallback.py	from agent import conversation_loop	7
+tests/agent/test_gemini_free_tier_gate.py	from agent.gemini_native_adapter import (	22
+tests/agent/test_gemini_schema.py	from agent.gemini_schema import (	11
+tests/agent/test_i18n.py	from agent import i18n	14
+tests/agent/test_image_gen_registry.py	from agent import image_gen_registry|from agent.image_gen_provider import ImageGenProvider	10
+tests/agent/test_image_routing.py	from agent.image_routing import (	57
+tests/agent/test_insights.py	from agent.insights import (	56
+tests/agent/test_local_stream_timeout.py	from agent.model_metadata import is_local_endpoint	9
+tests/agent/test_markdown_tables.py	from agent.markdown_tables import (	15
+tests/agent/test_memory_provider.py	from agent.memory_manager import MemoryManager|from agent.memory_provider import MemoryProvider	74
+tests/agent/test_memory_session_switch.py	from agent.memory_manager import MemoryManager|from agent.memory_provider import MemoryProvider	12
+tests/agent/test_memory_user_id.py	from agent.memory_manager import MemoryManager|from agent.memory_provider import MemoryProvider	14
+tests/agent/test_minimax_auxiliary_url.py	from agent.auxiliary_client import _to_openai_base_url	9
+tests/agent/test_model_metadata_ssl.py	from agent.model_metadata import _resolve_requests_verify	9
+tests/agent/test_model_metadata.py	from agent.model_metadata import (	102
+tests/agent/test_models_dev.py	from agent.models_dev import (	32
+tests/agent/test_moonshot_schema.py	from agent.moonshot_schema import (	31
+tests/agent/test_onboarding.py	from agent.onboarding import (	33
+tests/agent/test_plugin_llm.py	from agent.plugin_llm import (	56
+tests/agent/test_prompt_builder.py	from agent.prompt_builder import (	124
+tests/agent/test_prompt_caching.py	from agent.prompt_caching import (	14
+tests/agent/test_proxy_and_url_validation.py	from agent.auxiliary_client import _validate_base_url, _validate_proxy_env_urls	6
+tests/agent/test_rate_limit_tracker.py	from agent.rate_limit_tracker import (	24
+tests/agent/test_redact.py	from agent.redact import redact_sensitive_text, RedactingFormatter	80
+tests/agent/test_shell_hooks_consent.py	from agent import shell_hooks	23
+tests/agent/test_shell_hooks.py	from agent import shell_hooks	53
+tests/agent/test_skill_bundles.py	from agent.skill_bundles import (	33
+tests/agent/test_skill_commands.py	from agent.skill_commands import (	41
+tests/agent/test_skill_utils.py	from agent.skill_utils import (	15
+tests/agent/test_streaming_context_scrubber.py	from agent.memory_manager import StreamingContextScrubber, sanitize_context	21
+tests/agent/test_subagent_progress.py	from agent.display import KawaiiSpinner	21
+tests/agent/test_subdirectory_hints.py	from agent.subdirectory_hints import SubdirectoryHintTracker	18
+tests/agent/test_system_prompt_restore.py	from agent.conversation_loop import _restore_or_build_system_prompt	10
+tests/agent/test_think_scrubber.py	from agent.think_scrubber import StreamingThinkScrubber	27
+tests/agent/test_title_generator.py	from agent.title_generator import (	20
+tests/agent/test_tool_guardrails.py	from agent.tool_guardrails import (	13
+tests/agent/test_tool_result_classification.py	from agent.tool_result_classification import file_mutation_result_landed	3
+tests/agent/test_unsupported_parameter_retry.py	from agent.auxiliary_client import (	6
+tests/agent/test_unsupported_temperature_retry.py	from agent.auxiliary_client import (	7
+tests/agent/test_usage_pricing.py	from agent.usage_pricing import (	11
+tests/agent/test_video_gen_registry.py	from agent import video_gen_registry|from agent.video_gen_provider import VideoGenProvider	10
+tests/agent/transports/test_bedrock_transport.py	from agent.transports import get_transport|from agent.transports.types import NormalizedResponse, ToolCall	19
+tests/agent/transports/test_chat_completions.py	from agent.transports import get_transport|from agent.transports.types import NormalizedResponse	67
+tests/agent/transports/test_codex_app_server_session.py	from agent.transports.codex_app_server_session import (|import agent.transports.codex_app_server_session as session_mod	51
+tests/agent/transports/test_codex_event_projector.py	from agent.transports.codex_event_projector import (	20
+tests/agent/transports/test_codex_transport.py	from agent.transports import get_transport|from agent.transports.types import NormalizedResponse, ToolCall	39
+tests/agent/transports/test_transport.py	from agent.transports import get_transport, register_transport, _REGISTRY|from agent.transports.base import ProviderTransport|from agent.transports.types import NormalizedResponse, ToolCall, Usage	23
+tests/agent/transports/test_types.py	from agent.transports.types import (	37
+tests/gateway/test_compress_plugin_engine.py	from agent.context_engine import ContextEngine	2
+tests/gateway/test_restart_drain.py	from agent.i18n import t	16
+tests/gateway/test_session_hygiene.py	from agent.model_metadata import estimate_messages_tokens_rough	23
+tests/hermes_cli/test_gemini_provider.py	from agent.model_metadata import get_model_context_length|from agent.models_dev import PROVIDER_TO_MODELS_DEV, list_agentic_models, _NOISE_PATTERNS	46
+tests/hermes_cli/test_gmi_provider.py	from agent.auxiliary_client import resolve_provider_client|from agent.model_metadata import get_model_context_length	23
+tests/hermes_cli/test_hooks_cli.py	from agent import shell_hooks	14
+tests/hermes_cli/test_image_gen_picker.py	from agent import image_gen_registry|from agent.image_gen_provider import ImageGenProvider	14
+tests/hermes_cli/test_ollama_cloud_provider.py	from agent.model_metadata import _URL_TO_PROVIDER, _PROVIDER_PREFIXES|from agent.models_dev import PROVIDER_TO_MODELS_DEV, list_agentic_models	45
+tests/hermes_cli/test_video_gen_picker.py	from agent import video_gen_registry|from agent.video_gen_provider import VideoGenProvider	8
+tests/plugins/video_gen/test_fal_plugin.py	from agent import video_gen_registry	18
+tests/plugins/video_gen/test_xai_plugin_integration.py	from agent import video_gen_registry	11
+tests/plugins/video_gen/test_xai_plugin.py	from agent import video_gen_registry	7
+tests/providers/test_e2e_wiring.py	from agent.transports.chat_completions import ChatCompletionsTransport	6
+tests/providers/test_profile_wiring.py	from agent.transports.chat_completions import ChatCompletionsTransport	22
+tests/providers/test_transport_parity.py	from agent.transports.chat_completions import ChatCompletionsTransport	19
+tests/run_agent/test_413_compression.py	from agent.context_compressor import SUMMARY_PREFIX	15
+tests/run_agent/test_codex_app_server_integration.py	from agent.transports.codex_app_server_session import CodexAppServerSession, TurnResult	15
+tests/run_agent/test_codex_multimodal_tool_result.py	from agent.codex_responses_adapter import (	7
+tests/run_agent/test_compression_boundary.py	from agent.context_compressor import ContextCompressor	6
+tests/run_agent/test_compression_feasibility.py	from agent.context_compressor import ContextCompressor	16
+tests/run_agent/test_compressor_fallback_update.py	from agent.context_compressor import ContextCompressor	2
+tests/run_agent/test_image_shrink_recovery.py	from agent.error_classifier import FailoverReason, classify_api_error	13
+tests/run_agent/test_multimodal_tool_content_recovery.py	from agent.error_classifier import FailoverReason, classify_api_error	15
+tests/run_agent/test_plugin_context_engine_init.py	from agent.context_engine import ContextEngine	2
+tests/run_agent/test_provider_parity.py	from agent.codex_responses_adapter import _chat_content_to_responses_parts, _chat_messages_to_responses_input, _normalize_codex_response, _preflight_codex_input_items	83
+tests/run_agent/test_run_agent_multimodal_prologue.py	from agent.codex_responses_adapter import _chat_content_to_responses_parts	15
+tests/run_agent/test_run_agent.py	from agent.codex_responses_adapter import _chat_messages_to_responses_input, _normalize_codex_response, _preflight_codex_input_items|from agent.error_classifier import FailoverReason|from agent.prompt_builder import DEFAULT_AGENT_IDENTITY	337
+tests/run_agent/test_session_reset_fix.py	from agent.context_compressor import ContextCompressor	4
+tests/run_agent/test_switch_model_context.py	from agent.context_compressor import ContextCompressor	2
+tests/run_agent/test_tool_name_db_persistence.py	from agent.tool_dispatch_helpers import make_tool_result_message	1
+tests/test_account_usage.py	from agent.account_usage import (	4
+tests/test_bitwarden_secrets.py	from agent.secret_sources import bitwarden as bw  # noqa: E402	20
+tests/test_ollama_num_ctx.py	from agent.model_metadata import query_ollama_num_ctx	8
+tests/test_retry_utils.py	from agent.retry_utils import jittered_backoff|import agent.retry_utils as retry_utils	9
+tests/test_sql_injection.py	from agent.insights import InsightsEngine	4
+tests/tools/test_image_generation_plugin_dispatch.py	from agent import image_gen_registry|from agent.image_gen_provider import ImageGenProvider	3
+tests/tools/test_llm_content_none_guard.py	from agent.auxiliary_client import extract_content_or_reasoning	28
+tests/tools/test_video_generation_dispatch.py	from agent import video_gen_registry|from agent.video_gen_provider import VideoGenProvider	7
+tests/tools/test_video_generation_dynamic_schema.py	from agent import video_gen_registry|from agent.video_gen_provider import VideoGenProvider	5

@@ -1,0 +1,22 @@
+{
+  "name": "@hermests/providers",
+  "version": "0.0.1",
+  "description": "Provider profile registry for HermesTS",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./base": "./src/base.ts",
+    "./registry": "./src/registry.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hermests/core": "workspace:*"
+  },
+  "license": "MIT"
+}

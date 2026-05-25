@@ -1,0 +1,37 @@
+file:line	construct	snippet
+agent/agent_init.py:979	contextvar	    # coordination, and logging.  Uses the ContextVar system from
+agent/agent_init.py:982	contextvar	    # CLI mode where ContextVars aren't used.
+agent/agent_init.py:988	contextvar	        pass  # CLI/test mode — ContextVar not needed
+agent/anthropic_adapter.py:813	process-io	        result = subprocess.run(
+agent/anthropic_adapter.py:821	process-io	    except (OSError, subprocess.TimeoutExpired):
+agent/auxiliary_client.py:929	asyncio-primitive	    Wraps the sync adapter via asyncio.to_thread() so async consumers
+agent/auxiliary_client.py:938	asyncio-primitive	        return await asyncio.to_thread(self._sync.create, **kwargs)
+agent/chat_completion_helpers.py:19	contextvar	import contextvars
+agent/context_references.py:287	process-io	        result = subprocess.run(
+agent/context_references.py:294	process-io	    except subprocess.TimeoutExpired:
+agent/conversation_loop.py:285	contextvar	    # Bind the skill write-origin ContextVar for this thread so tool
+agent/copilot_acp_client.py:358	process-io	        self._active_process: subprocess.Popen[str] | None = None
+agent/copilot_acp_client.py:362	process-io	        proc: subprocess.Popen[str] | None
+agent/gemini_native_adapter.py:957	asyncio-primitive	        result = await asyncio.to_thread(self._sync.chat.completions.create, **kwargs)
+agent/gemini_native_adapter.py:963	asyncio-primitive	                done, chunk = await asyncio.to_thread(self._sync._advance_stream_iterator, result)
+agent/lsp/client.py:269	asyncio-primitive	        self._stderr_task = asyncio.create_task(self._drain_stderr())
+agent/lsp/client.py:271	asyncio-primitive	        self._reader_task = asyncio.create_task(self._reader_loop())
+agent/lsp/client.py:163	process-io	        self._proc: Optional[asyncio.subprocess.Process] = None
+agent/lsp/client.py:256	process-io	                stdin=asyncio.subprocess.PIPE,
+agent/lsp/install.py:235	process-io	        proc = subprocess.run(
+agent/lsp/install.py:247	process-io	    except (subprocess.TimeoutExpired, OSError) as e:
+agent/lsp/manager.py:580	asyncio-primitive	        await asyncio.gather(
+agent/secret_sources/bitwarden.py:177	process-io	            res = subprocess.run(
+agent/secret_sources/bitwarden.py:185	process-io	        except (OSError, subprocess.TimeoutExpired):
+agent/shell_hooks.py:393	process-io	        proc = subprocess.run(
+agent/shell_hooks.py:401	process-io	    except subprocess.TimeoutExpired:
+agent/skill_preprocessing.py:70	process-io	        completed = subprocess.run(
+agent/skill_preprocessing.py:78	process-io	    except subprocess.TimeoutExpired:
+agent/tool_executor.py:16	contextvar	import contextvars
+agent/tool_executor.py:290	contextvar	                    # Propagate ContextVars (e.g. _approval_session_key); mirrors asyncio.to_thread.
+agent/tool_executor.py:291	contextvar	                    ctx = contextvars.copy_context()
+agent/tool_executor.py:290	asyncio-primitive	                    # Propagate ContextVars (e.g. _approval_session_key); mirrors asyncio.to_thread.
+agent/transports/codex_app_server.py:117	process-io	        self._proc = subprocess.Popen(
+agent/transports/codex_app_server.py:119	process-io	            stdin=subprocess.PIPE,
+agent/transports/hermes_tools_mcp_server.py:220	process-io	    # subprocess.
+agent/web_search_provider.py:110	asyncio-primitive	        ideally wrap in :func:`asyncio.to_thread` at the call site; small

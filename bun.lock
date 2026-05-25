@@ -19,6 +19,13 @@
         "yaml": "^2.6.1",
       },
     },
+    "packages/providers": {
+      "name": "@hermests/providers",
+      "version": "0.0.1",
+      "dependencies": {
+        "@hermests/core": "workspace:*",
+      },
+    },
     "packages/state": {
       "name": "@hermests/state",
       "version": "0.0.1",
@@ -109,6 +116,8 @@
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.21.5", "", { "os": "win32", "cpu": "x64" }, "sha512-tQd/1efJuzPC6rCFwEvLtci/xNFcTZknmXs98FYDfGE4wP9ClFV98nyKrzJKVPMhdDnjzLhdUyMX4PsQAPjwIw=="],
 
     "@hermests/core": ["@hermests/core@workspace:packages/core"],
+
+    "@hermests/providers": ["@hermests/providers@workspace:packages/providers"],
 
     "@hermests/state": ["@hermests/state@workspace:packages/state"],
 

@@ -21,7 +21,7 @@ The port preserves the original module boundaries as a Bun/Node workspace monore
 | `@hermests/tools` | `tools/` (95 files, 67k LOC) | pending |
 | `@hermests/plugins` | `plugins/` (122 files, 46k LOC) | pending |
 | `@hermests/skills` | `skills/` + `optional-skills/` (91 files, 30k LOC) | pending |
-| `@hermests/providers` | `providers/` | pending |
+| `@hermests/providers` | `providers/` | in review |
 | `@hermests/acp` | `acp_adapter/` + `acp_registry/` | pending |
 | `@hermests/tui-gateway` | `tui_gateway/` | pending |
 | `@hermests/state` | `hermes_state.py` (140 KB) | PR open (port/state) |
