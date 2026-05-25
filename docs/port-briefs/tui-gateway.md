@@ -16,7 +16,7 @@ Three cross-cutting properties shape the port:
 
 | File | LOC | Role |
 |---|---:|---|
-| `tui_gateway/__init__.py` | 1 | Empty package marker. |
+| `tui_gateway/__init__.py` | 0 | Empty package marker. |
 | `tui_gateway/render.py` | 49 | Optional bridge to `agent.rich_output` (`format_response`, `render_diff`, `StreamingRenderer`). Returns `None` when the renderer module is missing — TUI then falls back to its own `markdown.tsx`. |
 | `tui_gateway/slash_worker.py` | 76 | `python -m tui_gateway.slash_worker` subprocess entry. Wraps `HermesCLI.process_command` with stdout/stderr redirection so its print output is captured to a `Rich.Console` buffer and returned as a structured response over its own stdin/stdout JSON-line protocol. |
 | `tui_gateway/event_publisher.py` | 126 | `WsPublisherTransport` — daemon-thread, queue-backed (`_QUEUE_MAX=256`), drop-on-full WebSocket publisher used by `TeeTransport` to mirror dispatcher emits to the dashboard sidebar. Designed never to stall the agent loop. |
