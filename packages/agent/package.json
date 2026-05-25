@@ -1,0 +1,29 @@
+{
+  "name": "@hermests/agent",
+  "version": "0.0.1",
+  "description": "Agent runtime — skill plumbing, prompt assembly, onboarding hints, title generation",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./skill-utils": "./src/skills/skill-utils.ts",
+    "./skill-preprocessing": "./src/skills/skill-preprocessing.ts",
+    "./skill-commands": "./src/skills/skill-commands.ts",
+    "./skill-bundles": "./src/skills/skill-bundles.ts",
+    "./prompt-builder": "./src/prompt/prompt-builder.ts",
+    "./onboarding": "./src/onboarding/onboarding.ts",
+    "./title-generator": "./src/title/title-generator.ts",
+    "./extensions": "./src/extensions/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hermests/core": "workspace:*",
+    "yaml": "^2.6.1"
+  },
+  "license": "MIT"
+}
